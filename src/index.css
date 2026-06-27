@@ -1,0 +1,76 @@
+/* Google Fonts */
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;600;700&display=swap');
+
+/* 편지 전용 폰트 */
+@font-face {
+  font-family: 'MemomentKkukkukk';
+  src: url('/fonts/MemomentKkukkukk.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+}
+
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+:root {
+  font-family: 'Noto Sans KR', system-ui, sans-serif;
+  font-size: 16px;
+  line-height: 1.5;
+  color: #fff;
+  background: #000;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  color-scheme: dark;
+}
+
+body {
+  margin: 0;
+  background: #000;
+  overflow-x: hidden;
+}
+
+#root {
+  min-height: 100dvh;
+  background: #000;
+}
+
+h1, h2, h3 {
+  margin: 0;
+  font-weight: 700;
+}
+
+p {
+  margin: 0;
+}
+
+button {
+  font-family: inherit;
+}
+
+textarea, input {
+  font-family: inherit;
+}
+
+/* 별 반짝임 애니메이션 */
+@keyframes twinkle {
+  0%, 100% { opacity: 0.1; transform: scale(1); }
+  50%       { opacity: 0.8; transform: scale(1.4); }
+}
+
+/* 맥동(pulse) 애니메이션 */
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.6; }
+}
+
+/* 연기 올라가는 애니메이션 */
+@keyframes smokerise {
+  0%   { opacity: 0.6; transform: translateY(0) scaleX(1); }
+  100% { opacity: 0; transform: translateY(-20px) scaleX(2); }
+}
+
+/* 스크롤바 다크 스타일 */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: #111; }
+::-webkit-scrollbar-thumb { background: #333; border-radius: 3px; }
