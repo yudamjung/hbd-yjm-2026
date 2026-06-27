@@ -9,12 +9,28 @@
   font-style: normal;
 }
 
+/* 제목용 폰트 (HS새마을) */
+@font-face {
+  font-family: 'HSSaemaeul';
+  src: url('/fonts/HSSaemaeul.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+}
+
+/* 본문용 폰트 (그리운몽토리) */
+@font-face {
+  font-family: 'GriunMongtori';
+  src: url('/fonts/GriunMongtori.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+}
+
 *, *::before, *::after {
   box-sizing: border-box;
 }
 
 :root {
-  font-family: 'Noto Sans KR', system-ui, sans-serif;
+  font-family: 'GriunMongtori', 'Noto Sans KR', system-ui, sans-serif;
   font-size: 16px;
   line-height: 1.5;
   color: #fff;
@@ -38,6 +54,7 @@ body {
 h1, h2, h3 {
   margin: 0;
   font-weight: 700;
+  font-family: 'HSSaemaeul', 'GriunMongtori', 'Noto Sans KR', sans-serif;
 }
 
 p {
@@ -50,6 +67,10 @@ button {
 
 textarea, input {
   font-family: inherit;
+}
+
+input::placeholder, textarea::placeholder {
+  font-family: 'MemomentKkukkukk', 'Noto Sans KR', sans-serif;
 }
 
 /* 별 반짝임 애니메이션 */

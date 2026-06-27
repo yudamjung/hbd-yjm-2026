@@ -3,14 +3,29 @@ import { motion, AnimatePresence } from 'framer-motion';
 import Cake3D from '../components/Cake3D';
 import LetterViewModal from '../components/LetterViewModal';
 import { getDecoration } from '../constants/decorations';
-import { getLetters, isCandleBlown, setCandleBlown } from '../utils/storage';
+import { subscribeLetters, isCandleBlown, setCandleBlown } from '../utils/storage';
 import { createBirthdaySong } from '../utils/birthdaySong';
+import { parseYouTube } from '../utils/youtube';
 import { BIRTHDAY_NAME, BIRTHDAY_AGE, OWNER_KEY } from '../constants/config';
 
 export default function CakePage() {
-  const [letters, setLetters] = useState(getLetters);
+  const [letters, setLetters] = useState([]);
   const [blown, setBlown] = useState(isCandleBlown);
   const [selectedLetter, setSelectedLetter] = useState(null);
+
+  // 실시간 구독 — 다른 사람이 남긴 편지도 바로 케이크에 반영
+  useEffect(() => {
+    const unsubscribe = subscribeLetters(setLetters);
+    return () => unsubscribe();
+  }, []);
+
+  // 열어둔 카드가 수정되면 최신 내용으로 갱신
+  useEffect(() => {
+    if (!selectedLetter) return;
+    const fresh = letters.find((l) => l.id === selectedLetter.id);
+    if (fresh && fresh !== selectedLetter) setSelectedLetter(fresh);
+  }, [letters, selectedLetter]);
+
   const [isOwner, setIsOwner] = useState(() =>
     sessionStorage.getItem('hbd_owner') === 'true'
   );
@@ -69,13 +84,19 @@ export default function CakePage() {
     if (!next) songRef.current?.start();
   }
 
+  // 편지에 배경음악이 있으면 카드 열린 동안 생일축하 피아노는 음소거
+  useEffect(() => {
+    const hasMusic = !!(selectedLetter && parseYouTube(selectedLetter.music));
+    if (hasMusic) songRef.current?.setMuted(true);
+    return () => { if (hasMusic) songRef.current?.setMuted(muted); };
+  }, [selectedLetter, muted]);
+
   function handleOwnerSubmit(e) {
     e.preventDefault();
     if (ownerInput === OWNER_KEY) {
       sessionStorage.setItem('hbd_owner', 'true');
       setIsOwner(true);
       setOwnerPrompt(false);
-      setLetters(getLetters());
     } else {
       setOwnerError('비밀번호가 틀렸어요.');
     }
@@ -470,6 +491,7 @@ export default function CakePage() {
             letter={selectedLetter}
             isOwner={isOwner}
             onClose={() => setSelectedLetter(null)}
+            onUpdated={() => { /* 실시간 구독이 자동 반영 */ }}
           />
         )}
       </AnimatePresence>

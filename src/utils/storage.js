@@ -1,58 +1,71 @@
+import { db } from './firebase';
+import { collection, getDocs, addDoc, updateDoc, doc, onSnapshot } from 'firebase/firestore';
 import { getAvailableSlot } from '../constants/slots';
 
-const STORAGE_KEY = 'hbd_letters';
 const CANDLE_KEY = 'hbd_candle_blown';
+const LETTERS = 'letters';
 
-// --- 편지 CRUD ---
+// --- 편지 CRUD (Firestore) ---
 
-export function getLetters() {
+// 실시간 구독: 케이크/카운트다운이 항상 최신 편지 목록을 캐시로 들고 있게 함.
+export function subscribeLetters(onUpdate) {
+  return onSnapshot(
+    collection(db, LETTERS),
+    (snap) => {
+      const letters = [];
+      snap.forEach((d) => letters.push({ id: d.id, ...d.data() }));
+      onUpdate(letters);
+    },
+    (e) => console.error('letters 구독 오류:', e),
+  );
+}
+
+export async function getLetters() {
   try {
-    return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
-  } catch {
+    const snap = await getDocs(collection(db, LETTERS));
+    const letters = [];
+    snap.forEach((d) => letters.push({ id: d.id, ...d.data() }));
+    return letters;
+  } catch (e) {
+    console.error('letters 조회 오류:', e);
     return [];
   }
 }
 
-function saveLetters(letters) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(letters));
+// existingLetters(구독 캐시)를 넘기면 추가 조회 없이 슬롯 계산 → 쓰기 1회만 발생(빠름).
+export async function addLetter({ name, passwordHash, content, decoration, music = '' }, existingLetters) {
+  try {
+    const letters = existingLetters || (await getLetters());
+    const slot = getAvailableSlot(letters.map((l) => l.slot));
+    if (slot === null) return { ok: false, reason: 'full' };
+
+    const data = { name, passwordHash, content, decoration, music, slot, createdAt: new Date().toISOString() };
+    const ref = await addDoc(collection(db, LETTERS), data);
+    return { ok: true, letter: { id: ref.id, ...data } };
+  } catch (e) {
+    console.error('letter 추가 오류:', e);
+    return { ok: false, reason: 'error' };
+  }
 }
 
-export function addLetter({ name, passwordHash, content, decoration }) {
-  const letters = getLetters();
-  const usedSlots = letters.map((l) => l.slot);
-  const slot = getAvailableSlot(usedSlots);
-  if (slot === null) return { ok: false, reason: 'full' };
-
-  const letter = {
-    id: crypto.randomUUID(),
-    name,
-    passwordHash,
-    content,
-    decoration,
-    slot,
-    createdAt: new Date().toISOString(),
-  };
-  letters.push(letter);
-  saveLetters(letters);
-  return { ok: true, letter };
+export async function updateLetter(id, { content, decoration, music }) {
+  try {
+    const fields = { content, decoration };
+    if (music !== undefined) fields.music = music; // 미제공 시 기존값 보존
+    await updateDoc(doc(db, LETTERS, id), fields);
+    return true;
+  } catch (e) {
+    console.error('letter 수정 오류:', e);
+    return false;
+  }
 }
 
-export function updateLetter(id, { content, decoration }) {
-  const letters = getLetters();
-  const idx = letters.findIndex((l) => l.id === id);
-  if (idx === -1) return false;
-  letters[idx] = { ...letters[idx], content, decoration };
-  saveLetters(letters);
-  return true;
+export async function findLetterByName(name, existingLetters) {
+  const letters = existingLetters || (await getLetters());
+  return letters.find((l) => l.name.trim().toLowerCase() === name.trim().toLowerCase()) || null;
 }
 
-export function findLetterByName(name) {
-  return getLetters().find(
-    (l) => l.name.trim().toLowerCase() === name.trim().toLowerCase()
-  ) || null;
-}
-
-// --- 촛불 상태 ---
+// --- 촛불 상태 (기기별로 기억하도록 localStorage 유지) ---
 
 export function isCandleBlown() {
   return localStorage.getItem(CANDLE_KEY) === 'true';

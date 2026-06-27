@@ -2,14 +2,31 @@ import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { getDecoration } from '../constants/decorations';
 import { verifyPassword } from '../utils/crypto';
+import { updateLetter } from '../utils/storage';
+import { BIRTHDAY_NAME, MAX_LETTER_LENGTH } from '../constants/config';
+import { parseYouTube } from '../utils/youtube';
+import YouTubeAudio from './YouTubeAudio';
+import cardLeftImg from '../assets/figma/card-left.png';
+import iloveyouImg from '../assets/figma/iloveyou.png';
 
-export default function LetterViewModal({ letter, isOwner, onClose }) {
+const LINE_H = 40;
+const LETTER_FONT = "'MemomentKkukkukk', 'Noto Sans KR', sans-serif";
+const SHORT_NAME = BIRTHDAY_NAME.slice(-2);
+
+export default function LetterViewModal({ letter, isOwner, onClose, onUpdated }) {
   const [step, setStep] = useState(isOwner ? 'view' : 'auth');
+  const [canEdit, setCanEdit] = useState(false); // 작성자 비번 인증 시 true
   const [pwInput, setPwInput] = useState('');
   const [error, setError] = useState('');
   const [checking, setChecking] = useState(false);
 
+  const [editing, setEditing] = useState(false);
+  const [content, setContent] = useState(letter.content);
+  const [draft, setDraft] = useState(letter.content);
+  const [saving, setSaving] = useState(false);
+
   const deco = getDecoration(letter.decoration);
+  const music = parseYouTube(letter.music);
 
   async function handleAuth(e) {
     e.preventDefault();
@@ -17,134 +34,185 @@ export default function LetterViewModal({ letter, isOwner, onClose }) {
     setChecking(true);
     const ok = await verifyPassword(pwInput, letter.passwordHash);
     setChecking(false);
-    if (ok) {
-      setStep('view');
-    } else {
-      setError('비밀번호가 일치하지 않아요.');
-    }
+    if (ok) { setCanEdit(true); setStep('view'); }
+    else setError('비밀번호가 일치하지 않아요.');
+  }
+
+  async function saveEdit() {
+    if (saving) return;
+    setSaving(true);
+    await updateLetter(letter.id, { content: draft, decoration: letter.decoration });
+    setContent(draft);
+    setEditing(false);
+    setSaving(false);
+    onUpdated && onUpdated();
   }
 
   return (
     <div
       style={{
-        position: 'fixed',
-        inset: 0,
-        background: '#000000cc',
-        backdropFilter: 'blur(6px)',
-        zIndex: 200,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: '16px',
+        position: 'fixed', inset: 0, zIndex: 200,
+        background: '#000000d8', backdropFilter: 'blur(6px)',
+        display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px',
       }}
       onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
     >
-      <motion.div
-        initial={{ opacity: 0, scale: 0.9, y: 16 }}
-        animate={{ opacity: 1, scale: 1, y: 0 }}
-        exit={{ opacity: 0, scale: 0.9 }}
-        style={{
-          background: '#0e0e0e',
-          border: `1px solid ${deco?.color ?? '#333'}44`,
-          borderRadius: '20px',
-          padding: '28px 24px',
-          width: '100%',
-          maxWidth: '400px',
-          position: 'relative',
-          boxShadow: `0 0 40px ${deco?.color ?? '#7b2d8b'}22`,
-        }}
-      >
-        <button
-          onClick={onClose}
-          style={{
-            position: 'absolute', top: '14px', right: '14px',
-            background: 'none', border: 'none', color: '#ffffff55',
-            fontSize: '1.1rem', cursor: 'pointer',
-          }}
-        >✕</button>
-
-        {/* 장식 배지 */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '20px' }}>
-          <span style={{
-            background: (deco?.color ?? '#7b2d8b') + '33',
-            border: `1px solid ${deco?.color ?? '#7b2d8b'}66`,
-            borderRadius: '20px',
-            padding: '4px 12px',
-            fontSize: '0.85rem',
-            color: deco?.color ?? '#fff',
-          }}>
-            {deco?.emoji} {deco?.label}
-          </span>
-          <span style={{ color: '#ffffff44', fontSize: '0.8rem' }}>
-            {letter.name}의 편지
-          </span>
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 14, width: '100%' }}>
+        {/* 헤더 배지: (장식명) · (작성자)님의 편지 */}
+        <div style={{ color: '#fff', fontSize: '0.95rem', fontWeight: 700, textAlign: 'center' }}>
+          <span style={{ marginRight: 6 }}>{deco?.emoji}</span>
+          {deco?.label} · {letter.name}님의 편지
         </div>
 
         {step === 'auth' ? (
-          <form onSubmit={handleAuth}>
-            <p style={{ color: '#ffffff77', fontSize: '0.9rem', marginBottom: '20px', lineHeight: 1.6 }}>
+          /* ── 비밀번호 게이트 (작성자 본인만 열람) ── */
+          <motion.div
+            initial={{ opacity: 0, scale: 0.94, y: 12 }} animate={{ opacity: 1, scale: 1, y: 0 }}
+            style={{
+              background: '#fff', borderRadius: 20, padding: '30px 36px',
+              width: '100%', maxWidth: 380, position: 'relative',
+              boxShadow: '0 24px 80px rgba(0,0,0,0.5)',
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button onClick={onClose} style={closeX}>✕</button>
+            <p style={{ fontFamily: LETTER_FONT, color: '#666', fontSize: '0.9rem', lineHeight: 1.7, textAlign: 'center', margin: '4px 0 22px' }}>
               이 편지는 {letter.name}님만 열어볼 수 있어요.<br />
               작성 시 사용한 비밀번호를 입력해주세요.
             </p>
-            <input
-              type="password"
-              style={{
-                width: '100%',
-                background: '#111',
-                border: '1px solid #333',
-                borderRadius: '10px',
-                padding: '12px 14px',
-                color: '#fff',
-                fontSize: '0.95rem',
-                outline: 'none',
-                boxSizing: 'border-box',
-                marginBottom: '12px',
-              }}
-              value={pwInput}
-              onChange={e => setPwInput(e.target.value)}
-              placeholder="비밀번호 입력"
-              autoFocus
-            />
-            {error && <p style={{ color: '#ff6b6b', fontSize: '0.85rem', marginBottom: '8px' }}>{error}</p>}
-            <button
-              type="submit"
-              disabled={checking}
-              style={{
-                width: '100%',
-                background: 'linear-gradient(135deg, #7b2d8b, #e63946)',
-                border: 'none',
-                borderRadius: '10px',
-                padding: '12px',
-                color: '#fff',
-                fontWeight: 600,
-                cursor: 'pointer',
-              }}
-            >
-              {checking ? '확인 중...' : '열어보기'}
-            </button>
-          </form>
+            <form onSubmit={handleAuth}>
+              <input
+                type="password" value={pwInput} autoFocus
+                onChange={(e) => { setPwInput(e.target.value); setError(''); }}
+                placeholder="비밀번호 입력"
+                style={{
+                  width: '100%', boxSizing: 'border-box', background: '#f4f4f4',
+                  border: 'none', borderRadius: 10, padding: '12px 14px',
+                  fontFamily: 'sans-serif', fontSize: '0.95rem', color: '#333', outline: 'none', marginBottom: 10,
+                }}
+              />
+              {error && <p style={{ color: '#e05555', fontSize: '0.82rem', margin: '0 0 10px' }}>{error}</p>}
+              <button type="submit" disabled={checking} style={sageBtn}>
+                {checking ? '확인 중...' : '편지 열어보기'}
+              </button>
+            </form>
+          </motion.div>
         ) : (
-          <div>
-            <p style={{
-              color: '#ffffffcc',
-              fontSize: '0.95rem',
-              lineHeight: 1.8,
-              whiteSpace: 'pre-wrap',
-              wordBreak: 'break-word',
+          /* ── 버스데이 카드 형태 열람 ── */
+          <motion.div
+            initial={{ opacity: 0, scale: 0.96 }} animate={{ opacity: 1, scale: 1 }}
+            style={{ position: 'relative', width: 'min(900px, calc(100vw - 32px))' }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* 카드가 뜸과 동시에 배경음악 재생 (숨김, 소리만) */}
+            {music && <YouTubeAudio videoId={music.id} start={music.start} />}
+            <div style={{
+              display: 'flex', width: '100%', aspectRatio: '972 / 703',
+              borderRadius: 12, overflow: 'hidden', boxShadow: '0 24px 80px rgba(0,0,0,0.8)',
             }}>
-              {letter.content}
-            </p>
-            <p style={{
-              color: '#ffffff33',
-              fontSize: '0.78rem',
-              marginTop: '20px',
-              textAlign: 'right',
-            }}>
-              — {letter.name}
-            </p>
-          </div>
+              {/* 왼쪽 이미지 */}
+              <div style={{ width: '45%', flexShrink: 0 }}>
+                <img src={cardLeftImg} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+              </div>
+              {/* 오른쪽 노트지 */}
+              <div style={{ flex: 1, background: '#fff', position: 'relative', display: 'flex', flexDirection: 'column', padding: '5% 6% 5% 5%', overflow: 'hidden' }}>
+                <img src={iloveyouImg} alt="" style={{ position: 'absolute', top: 0, right: 0, height: '52%', width: 'auto', objectFit: 'contain', pointerEvents: 'none', zIndex: 1 }} />
+
+                {/* To. */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4, position: 'relative', zIndex: 2 }}>
+                  <span style={{ fontFamily: LETTER_FONT, fontSize: '0.95rem', color: '#222', fontWeight: 700, whiteSpace: 'nowrap' }}>To. {SHORT_NAME}</span>
+                  <div style={{ flex: 1, borderBottom: '1px solid #bbb', marginLeft: 4, marginRight: '35%' }} />
+                </div>
+
+                {/* 내용 */}
+                <div style={{ position: 'relative', flex: 1, zIndex: 2 }}>
+                  <div style={{
+                    position: 'absolute', inset: 0,
+                    backgroundImage: `repeating-linear-gradient(to bottom, transparent 0px, transparent ${LINE_H - 1}px, #ddd ${LINE_H - 1}px, #ddd ${LINE_H}px)`,
+                    pointerEvents: 'none',
+                  }} />
+                  {editing ? (
+                    <textarea
+                      value={draft}
+                      onChange={(e) => setDraft(e.target.value.slice(0, MAX_LETTER_LENGTH))}
+                      autoFocus
+                      style={{
+                        position: 'relative', zIndex: 1, width: '70%', height: '100%',
+                        background: 'transparent', border: 'none', outline: 'none', resize: 'none',
+                        fontFamily: LETTER_FONT, fontSize: '1rem', lineHeight: `${LINE_H}px`,
+                        letterSpacing: '0.03em', color: '#222', padding: 0,
+                      }}
+                    />
+                  ) : (
+                    <p style={{
+                      position: 'relative', zIndex: 1, width: '70%', margin: 0,
+                      fontFamily: LETTER_FONT, fontSize: '1rem', lineHeight: `${LINE_H}px`,
+                      letterSpacing: '0.03em', color: '#222', whiteSpace: 'pre-wrap', wordBreak: 'break-word',
+                    }}>
+                      {content}
+                    </p>
+                  )}
+                </div>
+
+                {/* From. */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 6, position: 'relative', zIndex: 2, paddingLeft: '20%' }}>
+                  <div style={{ flex: 1, borderBottom: '1px solid #bbb' }} />
+                  <span style={{ fontFamily: LETTER_FONT, fontSize: '0.85rem', color: '#222', whiteSpace: 'nowrap' }}>From. {letter.name}</span>
+                </div>
+
+                {editing && (
+                  <div style={{ position: 'absolute', bottom: 6, left: 10, fontSize: '0.68rem', color: '#bbb', zIndex: 3 }}>
+                    {draft.length}/{MAX_LETTER_LENGTH}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* 닫기 */}
+            <button onClick={onClose} style={{ ...floatBtn, top: -14, right: -14 }}>✕</button>
+
+            {/* 작성자 전용: 수정 / 저장 / 취소 */}
+            {canEdit && !editing && (
+              <button onClick={() => { setDraft(content); setEditing(true); }} style={editBtn}>✎ 수정하기</button>
+            )}
+            {editing && (
+              <div style={{ position: 'absolute', bottom: -18, right: 8, display: 'flex', gap: 8 }}>
+                <button onClick={() => setEditing(false)} style={{ ...pillBtn, background: '#ddd', color: '#444' }}>취소</button>
+                <button onClick={saveEdit} disabled={saving} style={{ ...pillBtn, background: '#8bac8b', color: '#fff' }}>
+                  {saving ? '저장 중...' : '저장'}
+                </button>
+              </div>
+            )}
+          </motion.div>
         )}
-      </motion.div>
+      </div>
     </div>
   );
 }
+
+const sageBtn = {
+  width: '100%', background: '#8bac8b', border: 'none', borderRadius: 30,
+  padding: '13px', color: '#fff', fontSize: '0.95rem', fontFamily: LETTER_FONT,
+  fontWeight: 700, cursor: 'pointer', letterSpacing: '0.04em',
+};
+
+const closeX = {
+  position: 'absolute', top: 14, right: 14, background: 'none', border: 'none',
+  color: '#aaa', fontSize: '1.1rem', cursor: 'pointer',
+};
+
+const floatBtn = {
+  position: 'absolute', width: 38, height: 38, borderRadius: '50%',
+  background: '#1a1a1a', border: '1.5px solid #444', color: '#fff',
+  fontSize: '1rem', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 10,
+};
+
+const pillBtn = {
+  border: 'none', borderRadius: 20, padding: '8px 18px', fontSize: '0.85rem',
+  fontFamily: LETTER_FONT, fontWeight: 700, cursor: 'pointer',
+};
+
+const editBtn = {
+  position: 'absolute', bottom: -16, right: 8, ...pillBtn,
+  background: '#fff', color: '#8bac8b', border: '1.5px solid #8bac8b',
+};

@@ -7,5 +7,5 @@ export const BIRTHDAY_DATE = new Date('2026-07-02T00:00:00+09:00'); // KST 기�
 export const OWNER_KEY = import.meta.env.VITE_OWNER_KEY || 'birthday2026';
 
 // 편지 제한
-export const MAX_LETTERS = 40;
+export const MAX_LETTERS = 15;
 export const MAX_LETTER_LENGTH = 500;

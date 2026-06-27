@@ -1,19 +1,24 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import CountdownTimer from '../components/CountdownTimer';
 import LetterFormModal from '../components/LetterFormModal';
-import { getLetters } from '../utils/storage';
+import { subscribeLetters } from '../utils/storage';
 import { BIRTHDAY_NAME } from '../constants/config';
 
 export default function CountdownPage({ onExpire }) {
   const [showForm, setShowForm] = useState(false);
   const [editMode, setEditMode] = useState(false);
-  const [letterCount, setLetterCount] = useState(() => getLetters().length);
+  const [letters, setLetters] = useState([]);
+  const letterCount = letters.length;
+
+  useEffect(() => {
+    const unsubscribe = subscribeLetters(setLetters);
+    return () => unsubscribe();
+  }, []);
 
   const handleFormClose = useCallback(() => {
     setShowForm(false);
     setEditMode(false);
-    setLetterCount(getLetters().length);
   }, []);
 
   return (
@@ -133,6 +138,7 @@ export default function CountdownPage({ onExpire }) {
       {showForm && (
         <LetterFormModal
           editMode={editMode}
+          letters={letters}
           onClose={handleFormClose}
         />
       )}

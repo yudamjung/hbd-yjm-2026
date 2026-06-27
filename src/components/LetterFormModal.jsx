@@ -3,8 +3,10 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { DECORATIONS, getDecoration } from '../constants/decorations';
 import DecorationPicker, { AnimalSpinPreview } from './DecorationPicker';
 import { MAX_LETTER_LENGTH, MAX_LETTERS, BIRTHDAY_NAME } from '../constants/config';
-import { addLetter, updateLetter, findLetterByName, getLetters } from '../utils/storage';
+import { addLetter, updateLetter } from '../utils/storage';
 import { hashPassword, verifyPassword } from '../utils/crypto';
+import { parseYouTube } from '../utils/youtube';
+import YouTubeAudio from './YouTubeAudio';
 import cardLeftImg from '../assets/figma/card-left.png';
 import iloveyouImg from '../assets/figma/iloveyou.png';
 
@@ -12,7 +14,7 @@ const LINE_H = 46;
 const SHORT_NAME = BIRTHDAY_NAME.slice(-2); // '정민'
 const LETTER_FONT = "'MemomentKkukkukk', 'Noto Sans KR', sans-serif";
 
-export default function LetterFormModal({ editMode, onClose }) {
+export default function LetterFormModal({ editMode, letters = [], onClose }) {
   // 메인 스텝: 'auth' | 'writing' | 'decoration' | 'done'
   const [step, setStep] = useState(editMode ? 'auth' : 'writing');
   const [editingId, setEditingId] = useState(null);
@@ -22,6 +24,7 @@ export default function LetterFormModal({ editMode, onClose }) {
   const [senderName, setSenderName] = useState('');
   const [password, setPassword] = useState('');
   const [decoration, setDecoration] = useState(DECORATIONS[0].id);
+  const [musicUrl, setMusicUrl] = useState(''); // 배경음악 유튜브 링크 (선택)
 
   // From. 클릭으로 열리는 이름/비번 모달 (카드 위 오버레이)
   const [showCredModal, setShowCredModal] = useState(false);
@@ -37,19 +40,20 @@ export default function LetterFormModal({ editMode, onClose }) {
     setError('');
     const inputName = e.target.authName.value.trim();
     const inputPw = e.target.authPw.value;
-    const letter = findLetterByName(inputName);
+    const letter = letters.find((l) => l.name.trim().toLowerCase() === inputName.toLowerCase());
     if (!letter) { setError('해당 이름으로 작성된 편지를 찾을 수 없어요.'); return; }
     const ok = await verifyPassword(inputPw, letter.passwordHash);
     if (!ok) { setError('비밀번호가 일치하지 않아요.'); return; }
     setSenderName(letter.name);
     setContent(letter.content);
     setDecoration(letter.decoration);
+    setMusicUrl(letter.music || '');
     setEditingId(letter.id);
     setStep('writing');
   }
 
   /* ── 이름/비번 모달 완료 ── */
-  function handleCredSubmit(e) {
+  async function handleCredSubmit(e) {
     e.preventDefault();
     setCredError('');
     const inputName = e.target.credName.value.trim();
@@ -58,7 +62,7 @@ export default function LetterFormModal({ editMode, onClose }) {
     if (!inputPw) { setCredError('비밀번호를 입력해주세요.'); return; }
     // 이름 중복 체크 (수정 모드가 아닐 때만)
     if (!editingId) {
-      const existing = findLetterByName(inputName);
+      const existing = letters.find((l) => l.name.trim().toLowerCase() === inputName.toLowerCase());
       if (existing) { setCredError('이미 같은 이름으로 작성된 편지가 있어요.'); return; }
     }
     setSenderName(inputName);
@@ -79,15 +83,19 @@ export default function LetterFormModal({ editMode, onClose }) {
     if (submitting) return;
     setSubmitting(true);
     setError('');
+    const music = musicUrl.trim();
+    if (music && !parseYouTube(music)) {
+      setError('유튜브 링크를 확인해주세요.'); setSubmitting(false); return;
+    }
     try {
       if (editingId) {
-        updateLetter(editingId, { content, decoration: decoId });
+        await updateLetter(editingId, { content, decoration: decoId, music });
       } else {
-        if (getLetters().length >= MAX_LETTERS) {
+        if (letters.length >= MAX_LETTERS) {
           setError('케이크가 이미 가득 찼어요 🎂'); setSubmitting(false); return;
         }
         const passwordHash = await hashPassword(password);
-        const result = addLetter({ name: senderName, passwordHash, content, decoration: decoId });
+        const result = await addLetter({ name: senderName, passwordHash, content, decoration: decoId, music }, letters);
         if (!result.ok) { setError('자리가 모두 찼어요 🎂'); setSubmitting(false); return; }
       }
       setDecoration(decoId);
@@ -131,6 +139,10 @@ export default function LetterFormModal({ editMode, onClose }) {
             initial={{ opacity: 0, scale: 0.96 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0 }}
             style={{ position: 'relative', width: 'min(920px, calc(100vw - 32px))' }}
           >
+            {/* 수정 모드: 카드가 뜨면 저장된 배경음악 재생 */}
+            {editingId && parseYouTube(musicUrl) && (
+              <YouTubeAudio videoId={parseYouTube(musicUrl).id} start={parseYouTube(musicUrl).start} />
+            )}
             {/* 카드 본체 */}
             <div style={{
               display: 'flex',
@@ -298,7 +310,7 @@ export default function LetterFormModal({ editMode, onClose }) {
                           name="credPw"
                           type="password"
                           defaultValue={password}
-                          style={credInputStyle}
+                          style={{ ...credInputStyle, fontFamily: 'sans-serif' }}
                           placeholder="비밀번호를 입력해주세요"
                         />
                       </div>
@@ -331,6 +343,27 @@ export default function LetterFormModal({ editMode, onClose }) {
             <p style={{ color: '#fff', fontSize: '1rem', fontWeight: 700, margin: 0, minHeight: 24 }}>
               {getDecoration(decoration)?.label}
             </p>
+
+            {/* 배경음악 (유튜브 링크, 선택) */}
+            <div style={{ width: 'min(420px, 90vw)', textAlign: 'center' }}>
+              <label style={{ display: 'block', color: '#ffffffaa', fontSize: '0.85rem', marginBottom: 8 }}>
+                🎵 배경음악 (유튜브 링크, 선택)
+              </label>
+              <input
+                type="url"
+                value={musicUrl}
+                onChange={(e) => { setMusicUrl(e.target.value); if (error) setError(''); }}
+                placeholder="https://youtu.be/..."
+                style={{
+                  width: '100%', boxSizing: 'border-box', background: '#1c1c1c',
+                  border: '1px solid #ffffff22', borderRadius: 10, padding: '11px 14px',
+                  color: '#fff', fontSize: '0.9rem', outline: 'none',
+                }}
+              />
+              <p style={{ color: '#ffffff44', fontSize: '0.72rem', margin: '8px 0 0' }}>
+                생일자가 카드를 열 때 이 노래가 흘러나와요
+              </p>
+            </div>
 
             <button
               onClick={() => !submitting && handleSubmit(decoration)}
@@ -388,7 +421,7 @@ const whiteBoxStyle = {
 
 const modalTitleStyle = {
   fontSize: '1.15rem',
-  fontFamily: "MemomentKkukkukk",
+  fontFamily: "'HSSaemaeul', sans-serif",
   fontWeight: 800,
   color: '#111',
   textAlign: 'center',
@@ -398,7 +431,7 @@ const modalTitleStyle = {
 
 const modalSubStyle = {
   fontSize: '0.83rem',
-  fontFamily: "MemomentKkukkukk",
+  fontFamily: "'GriunMongtori', sans-serif",
   color: '#888',
   textAlign: 'center',
   lineHeight: 1.7,
@@ -415,7 +448,7 @@ const credRowStyle = {
 
 const credLabelStyle = {
   fontSize: '0.85rem',
-  fontFamily: "MemomentKkukkukk",
+  fontFamily: "'GriunMongtori', sans-serif",
   color: '#333',
   fontWeight: 700,
   whiteSpace: 'nowrap',
@@ -426,14 +459,13 @@ const credLabelStyle = {
 const credInputStyle = {
   flex: 1,
   background: '#f4f4f4',
-  fontFamily: "MemomentKkukkukk",
   border: 'none',
   borderRadius: 8,
   padding: '10px 14px',
   fontSize: '0.9rem',
   outline: 'none',
   color: '#333',
-  fontFamily: 'inherit',
+  fontFamily: "'MemomentKkukkukk', 'Noto Sans KR', sans-serif",
 };
 
 const sageBtn = {
@@ -444,7 +476,7 @@ const sageBtn = {
   padding: '13px',
   color: '#fff',
   fontSize: '0.95rem',
-  fontFamily: "MemomentKkukkukk",
+  fontFamily: "'GriunMongtori', sans-serif",
   fontWeight: 700,
   cursor: 'pointer',
   marginTop: 8,
@@ -486,7 +518,12 @@ function FormInput({ name, type = 'text', placeholder }) {
       name={name}
       type={type}
       placeholder={placeholder}
-      style={{ ...credInputStyle, width: '100%', marginBottom: 12 }}
+      style={{
+        ...credInputStyle,
+        width: '100%',
+        marginBottom: 12,
+        ...(type === 'password' && { fontFamily: 'sans-serif' }),
+      }}
     />
   );
 }

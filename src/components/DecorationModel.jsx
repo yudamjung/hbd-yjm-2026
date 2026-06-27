@@ -1,7 +1,6 @@
-// 장식 형태별 3D 모델 디스패처. 정면은 +Z, 바닥은 y=0.
+// 장식 형태별 3D 모델 디스패처. 정면은 +Z, 바닥은 y≈0.
 import { useMemo } from 'react';
 import * as THREE from 'three';
-import AnimalModel from './AnimalModel';
 import { getDecoration } from '../constants/decorations';
 
 const PINK = '#f4a9c4';
@@ -38,28 +37,28 @@ function PawModel({ d }) {
   const bean = d.bean || PINK;
   return (
     <group>
-      {/* 메인 둥근 패드 */}
-      <mesh position={[0, 0.5, 0]} scale={[1.18, 1.05, 0.62]}>
-        <sphereGeometry args={[0.5, 24, 24]} />
+      {/* 둥근 패드 */}
+      <mesh position={[0, 0.55, 0]} scale={[1.12, 1.2, 0.6]}>
+        <sphereGeometry args={[0.5, 28, 28]} />
         <meshStandardMaterial color={pad} roughness={0.85} />
       </mesh>
-      {/* 위쪽 토우 솜 3개 (봉긋한 실루엣) */}
-      {[[-0.32, 0.84, 0.18], [0, 0.97, 0.2], [0.32, 0.84, 0.18]].map((p, i) => (
-        <mesh key={i} position={p} scale={[0.62, 0.62, 0.5]}>
-          <sphereGeometry args={[0.27, 16, 16]} />
+      {/* 위쪽 토우 솜 3개 (살짝 봉긋한 실루엣) */}
+      {[[-0.3, 1.0], [0, 1.08], [0.3, 1.0]].map((p, i) => (
+        <mesh key={i} position={[p[0], p[1], 0.04]} scale={[0.7, 0.62, 0.55]}>
+          <sphereGeometry args={[0.2, 16, 16]} />
           <meshStandardMaterial color={pad} roughness={0.85} />
         </mesh>
       ))}
       {/* 중앙 큰 젤리 */}
-      <mesh position={[0, 0.42, 0.35]} scale={[1.3, 1.1, 0.72]}>
-        <sphereGeometry args={[0.23, 18, 18]} />
-        <meshStandardMaterial color={bean} roughness={0.45} />
+      <mesh position={[0, 0.46, 0.3]} scale={[1.25, 1.15, 0.6]}>
+        <sphereGeometry args={[0.22, 20, 20]} />
+        <meshStandardMaterial color={bean} roughness={0.4} />
       </mesh>
-      {/* 발가락 젤리 3개 (아치) */}
-      {[[-0.29, 0.82, 0.42], [0, 0.96, 0.44], [0.29, 0.82, 0.42]].map((p, i) => (
-        <mesh key={i} position={p} scale={[1, 1.15, 0.72]}>
-          <sphereGeometry args={[0.105, 14, 14]} />
-          <meshStandardMaterial color={bean} roughness={0.45} />
+      {/* 토우 젤리 3개 (아치) */}
+      {[[-0.26, 0.78], [0, 0.9], [0.26, 0.78]].map((p, i) => (
+        <mesh key={i} position={[p[0], p[1], 0.32]} scale={[1.05, 1.2, 0.6]}>
+          <sphereGeometry args={[0.1, 16, 16]} />
+          <meshStandardMaterial color={bean} roughness={0.4} />
         </mesh>
       ))}
     </group>
@@ -83,38 +82,32 @@ function SheepModel({ d }) {
           <meshStandardMaterial color={wool} roughness={0.97} />
         </mesh>
       ))}
-      {/* 얼굴 */}
       <mesh position={[0, 1.02, 0.2]} scale={[0.92, 1, 0.95]}>
         <sphereGeometry args={[0.27, 18, 18]} />
         <meshStandardMaterial color={fc} roughness={0.85} />
       </mesh>
-      {/* 이마 양털 */}
       <mesh position={[0, 1.22, 0.12]}>
         <sphereGeometry args={[0.2, 14, 14]} />
         <meshStandardMaterial color={wool} roughness={0.97} />
       </mesh>
-      {/* 귀 */}
       {[-0.28, 0.28].map((x, i) => (
         <mesh key={i} position={[x, 1.04, 0.18]} rotation={[0, 0, x > 0 ? -0.5 : 0.5]} scale={[0.6, 0.32, 0.4]}>
           <sphereGeometry args={[0.16, 12, 12]} />
           <meshStandardMaterial color={fc} roughness={0.85} />
         </mesh>
       ))}
-      {/* 눈 */}
       {[-0.1, 0.1].map((x, i) => (
         <mesh key={i} position={[x, 1.05, 0.42]}>
           <sphereGeometry args={[0.035, 10, 10]} />
           <meshStandardMaterial color={DARK} roughness={0.4} />
         </mesh>
       ))}
-      {/* 볼터치 */}
       {[-0.17, 0.17].map((x, i) => (
         <mesh key={i} position={[x, 0.96, 0.38]}>
           <sphereGeometry args={[0.04, 10, 10]} />
           <meshStandardMaterial color={PINK} roughness={0.7} />
         </mesh>
       ))}
-      {/* 다리 */}
       {[-0.18, 0.18].map((x, i) => (
         <mesh key={i} position={[x, 0.12, 0.18]}>
           <cylinderGeometry args={[0.06, 0.06, 0.24, 8]} />
@@ -125,11 +118,98 @@ function SheepModel({ d }) {
   );
 }
 
+// ── 고양이 (회색&흰색 바이컬러, 큰 눈, 분홍 코, 수염) ──
+function CatModel() {
+  const grey = '#b7c1cb';
+  const white = '#f7f4ef';
+  const inner = '#f0b9c6';
+  const nose = '#ec8aa0';
+  const eye = '#2a2320';
+  const whisker = '#efe9df';
+  return (
+    <group>
+      {/* 몸통(회색) */}
+      <mesh position={[0, 0.42, 0]} scale={[1, 1.05, 0.95]}>
+        <sphereGeometry args={[0.46, 22, 22]} />
+        <meshStandardMaterial color={grey} roughness={0.85} />
+      </mesh>
+      {/* 가슴(흰) */}
+      <mesh position={[0, 0.34, 0.32]} scale={[0.6, 0.85, 0.5]}>
+        <sphereGeometry args={[0.34, 16, 16]} />
+        <meshStandardMaterial color={white} roughness={0.85} />
+      </mesh>
+      {/* 앞발(흰) */}
+      {[-0.24, 0.24].map((x, i) => (
+        <mesh key={i} position={[x, 0.15, 0.34]}>
+          <sphereGeometry args={[0.12, 14, 14]} />
+          <meshStandardMaterial color={white} roughness={0.85} />
+        </mesh>
+      ))}
+      {/* 꼬리(회색) */}
+      <mesh position={[0.36, 0.5, -0.32]} rotation={[0.5, 0, -0.4]} scale={[0.5, 1.15, 0.5]}>
+        <sphereGeometry args={[0.2, 14, 14]} />
+        <meshStandardMaterial color={grey} roughness={0.9} />
+      </mesh>
+      {/* 머리(회색) */}
+      <mesh position={[0, 1.0, 0.02]}>
+        <sphereGeometry args={[0.4, 24, 24]} />
+        <meshStandardMaterial color={grey} roughness={0.85} />
+      </mesh>
+      {/* 얼굴 흰 패치 */}
+      <mesh position={[0, 0.92, 0.3]} scale={[0.8, 0.95, 0.62]}>
+        <sphereGeometry args={[0.3, 18, 18]} />
+        <meshStandardMaterial color={white} roughness={0.85} />
+      </mesh>
+      {/* 귀(회색 + 분홍 속) */}
+      {[-0.24, 0.24].map((x, i) => (
+        <group key={i} position={[x, 1.35, 0]} rotation={[0, 0, x > 0 ? -0.2 : 0.2]}>
+          <mesh><coneGeometry args={[0.15, 0.3, 18]} /><meshStandardMaterial color={grey} roughness={0.85} /></mesh>
+          <mesh position={[0, -0.02, 0.06]} scale={[0.6, 0.7, 0.5]}>
+            <coneGeometry args={[0.15, 0.3, 18]} /><meshStandardMaterial color={inner} roughness={0.8} />
+          </mesh>
+        </group>
+      ))}
+      {/* 큰 눈 + 하이라이트 */}
+      {[-0.15, 0.15].map((x, i) => (
+        <group key={i} position={[x, 1.02, 0.45]}>
+          <mesh><sphereGeometry args={[0.075, 16, 16]} /><meshStandardMaterial color={eye} roughness={0.25} /></mesh>
+          <mesh position={[0.025, 0.035, 0.045]}>
+            <sphereGeometry args={[0.022, 10, 10]} />
+            <meshStandardMaterial color="#fff" emissive="#fff" emissiveIntensity={0.25} />
+          </mesh>
+        </group>
+      ))}
+      {/* 코(분홍 삼각) */}
+      <mesh position={[0, 0.9, 0.55]} rotation={[Math.PI, 0, 0]}>
+        <coneGeometry args={[0.05, 0.07, 3]} />
+        <meshStandardMaterial color={nose} roughness={0.5} />
+      </mesh>
+      {/* 볼터치 */}
+      {[-0.27, 0.27].map((x, i) => (
+        <mesh key={i} position={[x, 0.87, 0.34]}>
+          <sphereGeometry args={[0.05, 10, 10]} />
+          <meshStandardMaterial color={inner} roughness={0.7} />
+        </mesh>
+      ))}
+      {/* 수염 (양쪽 3가닥) */}
+      {[-1, 1].map((s) =>
+        [-0.1, 0, 0.1].map((tilt, j) => (
+          <mesh key={`${s}-${j}`} position={[s * 0.4, 0.85, 0.36]} rotation={[0, 0, s * (Math.PI / 2) + tilt]}>
+            <cylinderGeometry args={[0.006, 0.006, 0.34, 5]} />
+            <meshStandardMaterial color={whisker} roughness={0.6} />
+          </mesh>
+        )),
+      )}
+    </group>
+  );
+}
+
 export default function DecorationModel({ type }) {
   const d = getDecoration(type);
   if (!d) return null;
   if (d.shape === 'heart') return <HeartModel d={d} />;
   if (d.shape === 'paw') return <PawModel d={d} />;
   if (d.shape === 'sheep') return <SheepModel d={d} />;
-  return <AnimalModel type={type} />;
+  if (d.shape === 'cat') return <CatModel />;
+  return null;
 }

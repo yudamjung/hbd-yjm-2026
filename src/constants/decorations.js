@@ -3,7 +3,7 @@
 // emoji는 편지 배지·목록 등 작은 UI용.
 export const DECORATIONS = [
   { id: 'sheep',     label: '양',        emoji: '🐑', shape: 'sheep',  color: '#f1ebe0', face: '#5c5249' },
-  { id: 'cat',       label: '고양이',    emoji: '🐱', shape: 'animal', color: '#e8a45e', face: '#f4cd9c', ear: 'pointy', nose: '#7a5230' },
+  { id: 'cat',       label: '고양이',    emoji: '🐱', shape: 'cat' },
   { id: 'paw',       label: '냥젤리',    emoji: '🐾', shape: 'paw',    color: '#f3ead9', bean: '#ed9a84' },
   { id: 'heartRed',  label: '빨간 하트', emoji: '❤️', shape: 'heart',  color: '#e23b4e' },
   { id: 'heartPink', label: '분홍 하트', emoji: '💗', shape: 'heart',  color: '#f4a9c4' },
