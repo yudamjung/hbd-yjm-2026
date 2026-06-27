@@ -124,13 +124,12 @@ export default function LetterViewModal({ letter, isOwner, onClose, onUpdated })
                   <div style={{ flex: 1, borderBottom: '1px solid #bbb', marginLeft: 4, marginRight: '35%' }} />
                 </div>
 
-                {/* 내용 */}
-                <div style={{ position: 'relative', flex: 1, zIndex: 2 }}>
-                  <div style={{
-                    position: 'absolute', inset: 0,
-                    backgroundImage: `repeating-linear-gradient(to bottom, transparent 0px, transparent ${LINE_H - 1}px, #ddd ${LINE_H - 1}px, #ddd ${LINE_H}px)`,
-                    pointerEvents: 'none',
-                  }} />
+                {/* 내용 — 길면 스크롤 (점선은 내용과 함께 흐르도록 local 배경) */}
+                <div style={{
+                  position: 'relative', flex: 1, zIndex: 2, overflowY: 'auto',
+                  backgroundImage: `repeating-linear-gradient(to bottom, transparent 0px, transparent ${LINE_H - 1}px, #ddd ${LINE_H - 1}px, #ddd ${LINE_H}px)`,
+                  backgroundAttachment: 'local',
+                }}>
                   {editing ? (
                     <textarea
                       value={draft}
@@ -145,7 +144,7 @@ export default function LetterViewModal({ letter, isOwner, onClose, onUpdated })
                     />
                   ) : (
                     <p style={{
-                      position: 'relative', zIndex: 1, width: '70%', margin: 0,
+                      position: 'relative', zIndex: 1, width: '70%', margin: 0, minHeight: '100%',
                       fontFamily: LETTER_FONT, fontSize: '1rem', lineHeight: `${LINE_H}px`,
                       letterSpacing: '0.03em', color: '#222', whiteSpace: 'pre-wrap', wordBreak: 'break-word',
                     }}>
