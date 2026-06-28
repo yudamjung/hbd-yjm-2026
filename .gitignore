@@ -12,6 +12,10 @@ dist
 dist-ssr
 *.local
 .env
+*.mov
+*.mp4
+# 카운트다운 영상은 Vercel 빌드에 포함돼야 하므로 예외로 추적
+!public/birthday-countdown.mp4
 
 # Project-local docs / config (not needed in repo)
 firestore.rules

@@ -34,7 +34,7 @@ export default function CakePage() {
   const [ownerInput, setOwnerInput] = useState('');
   const [ownerError, setOwnerError] = useState('');
   const [showLetterList, setShowLetterList] = useState(false);
-  const [showVideoHint, setShowVideoHint] = useState(false);
+  const [showVideo, setShowVideo] = useState(false);
   const [entered, setEntered] = useState(false);
   const [muted, setMuted] = useState(false);
   const [volumeHint, setVolumeHint] = useState(0); // 값이 바뀌면 볼륨 안내 토스트 재표시
@@ -97,6 +97,13 @@ export default function CakePage() {
     }
     return () => { if (hasMusic) songRef.current?.setMuted(muted); };
   }, [selectedLetter, muted]);
+
+  // 영상 다시 보기 동안에는 배경 피아노 음소거 (영상 소리와 겹치지 않게)
+  useEffect(() => {
+    if (!showVideo) return;
+    songRef.current?.setMuted(true);
+    return () => { songRef.current?.setMuted(muted); };
+  }, [showVideo, muted]);
 
   function handleOwnerSubmit(e) {
     e.preventDefault();
@@ -315,7 +322,7 @@ export default function CakePage() {
 
       {/* 영상 재생 버튼 (투명 아이콘, 우측 하단) */}
       <button
-        onClick={() => setShowVideoHint(true)}
+        onClick={() => setShowVideo(true)}
         title="생일 영상 다시 보기"
         style={{
           position: 'fixed',
@@ -338,29 +345,57 @@ export default function CakePage() {
         </svg>
       </button>
 
-      {/* 영상 준비 중 토스트 */}
+      {/* 생일 영상 다시 보기 모달 */}
       <AnimatePresence>
-        {showVideoHint && (
+        {showVideo && (
           <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 10 }}
-            onAnimationComplete={() => setTimeout(() => setShowVideoHint(false), 2000)}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={(e) => { if (e.target === e.currentTarget) setShowVideo(false); }}
             style={{
               position: 'fixed',
-              bottom: '70px',
-              right: '24px',
-              background: '#1a1a1a',
-              border: '1px solid #333',
-              borderRadius: '10px',
-              padding: '10px 16px',
-              color: '#fff',
-              fontSize: '0.82rem',
-              zIndex: 10,
-              maxWidth: '200px',
+              inset: 0,
+              background: '#000000e6',
+              zIndex: 300,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              padding: '16px',
             }}
           >
-            🎬 영상이 곧 추가될 예정이에요!
+            <video
+              src="/birthday-countdown.mp4"
+              autoPlay
+              controls
+              playsInline
+              style={{
+                width: 'min(720px, 92vw)',
+                maxHeight: '85vh',
+                borderRadius: '16px',
+                background: '#000',
+              }}
+            />
+            <button
+              onClick={() => setShowVideo(false)}
+              aria-label="닫기"
+              style={{
+                position: 'fixed',
+                top: '20px',
+                right: '20px',
+                background: '#00000088',
+                border: '1px solid #ffffff44',
+                borderRadius: '50%',
+                width: '40px',
+                height: '40px',
+                color: '#fff',
+                fontSize: '1.2rem',
+                cursor: 'pointer',
+                zIndex: 301,
+              }}
+            >
+              ✕
+            </button>
           </motion.div>
         )}
       </AnimatePresence>

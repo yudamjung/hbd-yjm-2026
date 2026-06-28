@@ -1,15 +1,23 @@
 import { useState, useCallback, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import CountdownTimer from '../components/CountdownTimer';
+import CountdownVideo from '../components/CountdownVideo';
 import LetterFormModal from '../components/LetterFormModal';
 import { subscribeLetters } from '../utils/storage';
 import { BIRTHDAY_NAME } from '../constants/config';
 
-export default function CountdownPage({ onExpire }) {
+export default function CountdownPage({ onExpire, deadline }) {
   const [showForm, setShowForm] = useState(false);
   const [editMode, setEditMode] = useState(false);
   const [letters, setLetters] = useState([]);
+  const [videoActive, setVideoActive] = useState(false);
+  const [videoOffset, setVideoOffset] = useState(0);
   const letterCount = letters.length;
+
+  const handleLastMinute = useCallback((totalSec) => {
+    setVideoOffset(Math.max(0, 60 - totalSec)); // 늦게 접속 시 현재 시점으로 점프
+    setVideoActive(true);
+  }, []);
 
   useEffect(() => {
     const unsubscribe = subscribeLetters(setLetters);
@@ -63,8 +71,11 @@ export default function CountdownPage({ onExpire }) {
         transition={{ duration: 0.8, delay: 0.2 }}
         style={{ zIndex: 1 }}
       >
-        <CountdownTimer onExpire={onExpire} />
+        <CountdownTimer onExpire={onExpire} onLastMinute={handleLastMinute} deadline={deadline} />
       </motion.div>
+
+      {/* 마감 1분 전부터 카운트다운과 함께 보이는 영상 */}
+      <CountdownVideo active={videoActive} startOffset={videoOffset} />
 
       {/* 편지 수 표시 */}
       {letterCount > 0 && (

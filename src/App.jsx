@@ -15,12 +15,21 @@ function forcedView() {
   return v === 'cake' || v === 'countdown' ? v : null;
 }
 
+// 데모용: ?demo=video 로 접속 시 새로고침마다 1분 10초 남은 카운트다운으로 시작
+// (10초 뒤 60초 지점에서 영상 자동재생 → 0초에 케이크로 전환)
+function demoMode() {
+  return new URLSearchParams(window.location.search).get('demo') === 'video';
+}
+
 function isMobile() {
   return window.innerWidth < 768;
 }
 
 export default function App() {
-  const [phase, setPhase] = useState(() => forcedView() ?? (isBirthday() ? 'cake' : 'countdown'));
+  const [demoDeadline] = useState(() => (demoMode() ? new Date(Date.now() + 70_000) : undefined));
+  const [phase, setPhase] = useState(() =>
+    demoMode() ? 'countdown' : (forcedView() ?? (isBirthday() ? 'cake' : 'countdown'))
+  );
   const [mobile, setMobile] = useState(isMobile);
 
   useEffect(() => {
@@ -48,7 +57,7 @@ export default function App() {
           exit={{ opacity: 0 }}
           transition={{ duration: 0.8 }}
         >
-          <CountdownPage onExpire={handleExpire} />
+          <CountdownPage onExpire={handleExpire} deadline={demoDeadline} />
         </motion.div>
       ) : (
         <motion.div
