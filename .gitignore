@@ -13,6 +13,11 @@ dist-ssr
 *.local
 .env
 
+# Project-local docs / config (not needed in repo)
+firestore.rules
+FIREBASE_SETUP.md
+CLAUDE.md
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
