@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { getDecoration } from '../constants/decorations';
+import { DECORATIONS, getDecoration } from '../constants/decorations';
 import { verifyPassword } from '../utils/crypto';
 import { updateLetter } from '../utils/storage';
 import { BIRTHDAY_NAME, MAX_LETTER_LENGTH } from '../constants/config';
@@ -22,11 +22,26 @@ export default function LetterViewModal({ letter, isOwner, onClose, onUpdated })
 
   const [editing, setEditing] = useState(false);
   const [content, setContent] = useState(letter.content);
+  const [decoration, setDecoration] = useState(letter.decoration);
+  const [musicRaw, setMusicRaw] = useState(letter.music || '');
+  // 수정용 임시값 (저장 시에만 반영)
   const [draft, setDraft] = useState(letter.content);
+  const [draftDeco, setDraftDeco] = useState(letter.decoration);
+  const [draftMusic, setDraftMusic] = useState(letter.music || '');
+  const [musicError, setMusicError] = useState('');
   const [saving, setSaving] = useState(false);
 
-  const deco = getDecoration(letter.decoration);
-  const music = parseYouTube(letter.music);
+  const deco = getDecoration(decoration);
+  const music = parseYouTube(musicRaw);
+
+  // 수정 모드: textarea를 내용 높이에 맞춰 늘려 스크롤은 바깥 컨테이너 하나만 담당
+  const taRef = useRef(null);
+  useEffect(() => {
+    const ta = taRef.current;
+    if (!editing || !ta) return;
+    ta.style.height = 'auto';
+    ta.style.height = `${ta.scrollHeight}px`;
+  }, [editing, draft]);
 
   async function handleAuth(e) {
     e.preventDefault();
@@ -38,11 +53,23 @@ export default function LetterViewModal({ letter, isOwner, onClose, onUpdated })
     else setError('비밀번호가 일치하지 않아요.');
   }
 
+  function startEdit() {
+    setDraft(content);
+    setDraftDeco(decoration);
+    setDraftMusic(musicRaw);
+    setMusicError('');
+    setEditing(true);
+  }
+
   async function saveEdit() {
     if (saving) return;
+    const m = draftMusic.trim();
+    if (m && !parseYouTube(m)) { setMusicError('유튜브 링크를 확인해주세요.'); return; }
     setSaving(true);
-    await updateLetter(letter.id, { content: draft, decoration: letter.decoration });
+    await updateLetter(letter.id, { content: draft, decoration: draftDeco, music: m });
     setContent(draft);
+    setDecoration(draftDeco);
+    setMusicRaw(m);
     setEditing(false);
     setSaving(false);
     onUpdated && onUpdated();
@@ -53,11 +80,11 @@ export default function LetterViewModal({ letter, isOwner, onClose, onUpdated })
       style={{
         position: 'fixed', inset: 0, zIndex: 200,
         background: '#000000d8', backdropFilter: 'blur(6px)',
-        display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px',
+        display: 'flex', overflowY: 'auto', padding: '16px',
       }}
       onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
     >
-      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 14, width: '100%' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 14, width: '100%', margin: 'auto' }}>
         {/* 헤더 배지: (장식명) · (작성자)님의 편지 */}
         <div style={{ color: '#fff', fontSize: '0.95rem', fontWeight: 700, textAlign: 'center' }}>
           <span style={{ marginRight: 6 }}>{deco?.emoji}</span>
@@ -132,12 +159,13 @@ export default function LetterViewModal({ letter, isOwner, onClose, onUpdated })
                 }}>
                   {editing ? (
                     <textarea
+                      ref={taRef}
                       value={draft}
                       onChange={(e) => setDraft(e.target.value.slice(0, MAX_LETTER_LENGTH))}
                       autoFocus
                       style={{
-                        position: 'relative', zIndex: 1, width: '70%', height: '100%',
-                        background: 'transparent', border: 'none', outline: 'none', resize: 'none',
+                        position: 'relative', zIndex: 1, width: '70%', minHeight: '100%', height: 'auto',
+                        background: 'transparent', border: 'none', outline: 'none', resize: 'none', overflow: 'hidden',
                         fontFamily: LETTER_FONT, fontSize: '1rem', lineHeight: `${LINE_H}px`,
                         letterSpacing: '0.03em', color: '#222', padding: 0,
                       }}
@@ -170,16 +198,62 @@ export default function LetterViewModal({ letter, isOwner, onClose, onUpdated })
             {/* 닫기 */}
             <button onClick={onClose} style={{ ...floatBtn, top: -14, right: -14 }}>✕</button>
 
-            {/* 작성자 전용: 수정 / 저장 / 취소 */}
+            {/* 작성자 전용: 수정 진입 버튼 */}
             {canEdit && !editing && (
-              <button onClick={() => { setDraft(content); setEditing(true); }} style={editBtn}>✎ 수정하기</button>
+              <button onClick={startEdit} style={editBtn}>✎ 수정하기</button>
             )}
+
+            {/* 작성자 전용: 케이크 아이템 · 배경음악 수정 패널 */}
             {editing && (
-              <div style={{ position: 'absolute', bottom: -18, right: 8, display: 'flex', gap: 8 }}>
-                <button onClick={() => setEditing(false)} style={{ ...pillBtn, background: '#ddd', color: '#444' }}>취소</button>
-                <button onClick={saveEdit} disabled={saving} style={{ ...pillBtn, background: '#8bac8b', color: '#fff' }}>
-                  {saving ? '저장 중...' : '저장'}
-                </button>
+              <div style={editPanel}>
+                <div style={{ width: '100%' }}>
+                  <p style={editLabel}>🎂 케이크에 올릴 아이템</p>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, justifyContent: 'center' }}>
+                    {DECORATIONS.map((d) => {
+                      const on = draftDeco === d.id;
+                      return (
+                        <button
+                          key={d.id}
+                          type="button"
+                          onClick={() => setDraftDeco(d.id)}
+                          style={{
+                            display: 'flex', alignItems: 'center', gap: 6,
+                            padding: '8px 14px', borderRadius: 20, cursor: 'pointer',
+                            border: `1.5px solid ${on ? '#f3a9c4' : '#ffffff22'}`,
+                            background: on ? 'rgba(243,169,196,0.15)' : '#1c1c1c',
+                            color: on ? '#fff' : '#ccc', fontSize: '0.85rem', fontWeight: 600,
+                          }}
+                        >
+                          <span style={{ fontSize: '1.1rem' }}>{d.emoji}</span>{d.label}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                <div style={{ width: '100%', maxWidth: 420 }}>
+                  <p style={editLabel}>🎵 배경음악 (유튜브 링크, 선택)</p>
+                  <input
+                    type="url"
+                    value={draftMusic}
+                    onChange={(e) => { setDraftMusic(e.target.value); if (musicError) setMusicError(''); }}
+                    placeholder="https://youtu.be/..."
+                    style={{
+                      width: '100%', boxSizing: 'border-box', background: '#1c1c1c',
+                      border: '1px solid #ffffff22', borderRadius: 10, padding: '10px 14px',
+                      color: '#fff', fontSize: '0.88rem', outline: 'none',
+                    }}
+                  />
+                </div>
+
+                {musicError && <p style={{ color: '#ff8080', fontSize: '0.8rem', margin: 0 }}>{musicError}</p>}
+
+                <div style={{ display: 'flex', gap: 10 }}>
+                  <button onClick={() => setEditing(false)} style={{ ...pillBtn, background: '#333', color: '#ddd' }}>취소</button>
+                  <button onClick={saveEdit} disabled={saving} style={{ ...pillBtn, background: '#8bac8b', color: '#fff' }}>
+                    {saving ? '저장 중...' : '저장'}
+                  </button>
+                </div>
               </div>
             )}
           </motion.div>
@@ -188,6 +262,15 @@ export default function LetterViewModal({ letter, isOwner, onClose, onUpdated })
     </div>
   );
 }
+
+const editPanel = {
+  marginTop: 22, display: 'flex', flexDirection: 'column',
+  alignItems: 'center', gap: 16, width: '100%',
+};
+
+const editLabel = {
+  color: '#ffffffcc', fontSize: '0.82rem', textAlign: 'center', margin: '0 0 10px',
+};
 
 const sageBtn = {
   width: '100%', background: '#8bac8b', border: 'none', borderRadius: 30,
