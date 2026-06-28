@@ -22,33 +22,43 @@ export default function VolumeHint({ triggerKey, duration = 4000 }) {
   return (
     <AnimatePresence>
       {visible && (
-        <motion.div
-          initial={{ opacity: 0, y: -16 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -16 }}
-          onClick={() => setVisible(false)}
+        // flex 래퍼로 가로 중앙 정렬(framer-motion의 transform과 충돌 방지)
+        <div
           style={{
             position: 'fixed',
-            top: '20px',
-            left: '50%',
-            transform: 'translateX(-50%)',
-            background: '#1a1a1aee',
-            border: '1px solid #ffffff22',
-            borderRadius: '24px',
-            padding: '10px 20px',
-            color: '#fff',
-            fontSize: '0.85rem',
-            zIndex: 400,
+            left: 0,
+            right: 0,
+            bottom: '32px',
             display: 'flex',
-            alignItems: 'center',
-            gap: '8px',
-            boxShadow: '0 8px 30px rgba(0,0,0,0.5)',
-            cursor: 'pointer',
-            whiteSpace: 'nowrap',
+            justifyContent: 'center',
+            zIndex: 400,
+            pointerEvents: 'none',
           }}
         >
-          🔊 사운드가 있어요 — 무음이라면 볼륨을 올려주세요!
-        </motion.div>
+          <motion.div
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 16 }}
+            onClick={() => setVisible(false)}
+            style={{
+              background: '#1a1a1aee',
+              border: '1px solid #ffffff22',
+              borderRadius: '24px',
+              padding: '10px 20px',
+              color: '#fff',
+              fontSize: '0.85rem',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              boxShadow: '0 8px 30px rgba(0,0,0,0.5)',
+              cursor: 'pointer',
+              whiteSpace: 'nowrap',
+              pointerEvents: 'auto',
+            }}
+          >
+            🔊 사운드가 있어요 — 무음이라면 볼륨을 올려주세요!
+          </motion.div>
+        </div>
       )}
     </AnimatePresence>
   );
