@@ -280,12 +280,19 @@ export default function CakePage() {
         style={{ marginTop: '12px', zIndex: 1, display: 'flex', gap: '12px', flexWrap: 'wrap', justifyContent: 'center' }}
       >
         {isOwner ? (
-          <button
-            onClick={() => setShowLetterList(true)}
-            style={ghostBtn}
-          >
-            📋 편지 전체 보기
-          </button>
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px' }}>
+            {letters.length > 0 && (
+              <p style={{ color: '#ffd700aa', fontSize: '0.9rem', margin: 0 }}>
+                🎁 케이크 위 친구들을 눌러 편지를 확인해보세요
+              </p>
+            )}
+            <button
+              onClick={() => setShowLetterList(true)}
+              style={subtleLink}
+            >
+              편지 전체 보기
+            </button>
+          </div>
         ) : (
           <button
             onClick={() => setOwnerPrompt(true)}
@@ -552,6 +559,15 @@ const ghostBtn = {
   color: '#ffffff55',
   fontSize: '0.8rem',
   cursor: 'pointer',
+};
+
+const subtleLink = {
+  background: 'none',
+  border: 'none',
+  color: '#ffffff33',
+  fontSize: '0.75rem',
+  cursor: 'pointer',
+  textDecoration: 'underline',
 };
 
 function Stars() {
