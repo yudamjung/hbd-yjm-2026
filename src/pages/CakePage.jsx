@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Cake3D from '../components/Cake3D';
 import LetterViewModal from '../components/LetterViewModal';
+import VolumeHint from '../components/VolumeHint';
 import { getDecoration } from '../constants/decorations';
 import { subscribeLetters, isCandleBlown, setCandleBlown } from '../utils/storage';
 import { createBirthdaySong } from '../utils/birthdaySong';
@@ -36,6 +37,7 @@ export default function CakePage() {
   const [showVideoHint, setShowVideoHint] = useState(false);
   const [entered, setEntered] = useState(false);
   const [muted, setMuted] = useState(false);
+  const [volumeHint, setVolumeHint] = useState(0); // 값이 바뀌면 볼륨 안내 토스트 재표시
 
   // 마이크 기반 촛불 끄기
   const audioCtxRef = useRef(null);
@@ -48,6 +50,8 @@ export default function CakePage() {
   useEffect(() => {
     // 페이지 진입 애니메이션
     setTimeout(() => setEntered(true), 100);
+    // 진입 직후 사운드 볼륨 안내
+    setTimeout(() => setVolumeHint((k) => k + 1), 1200);
     return () => {
       if (rafRef.current) cancelAnimationFrame(rafRef.current);
       audioCtxRef.current?.close();
@@ -87,7 +91,10 @@ export default function CakePage() {
   // 편지에 배경음악이 있으면 카드 열린 동안 생일축하 피아노는 음소거
   useEffect(() => {
     const hasMusic = !!(selectedLetter && parseYouTube(selectedLetter.music));
-    if (hasMusic) songRef.current?.setMuted(true);
+    if (hasMusic) {
+      songRef.current?.setMuted(true);
+      setVolumeHint((k) => k + 1); // 음악 있는 편지 열람 시 볼륨 안내
+    }
     return () => { if (hasMusic) songRef.current?.setMuted(muted); };
   }, [selectedLetter, muted]);
 
@@ -152,6 +159,9 @@ export default function CakePage() {
       overflow: 'hidden',
     }}>
       <Stars />
+
+      {/* 사운드 볼륨 안내 토스트 */}
+      <VolumeHint triggerKey={volumeHint} />
 
       {/* 타이틀 */}
       <motion.div
