@@ -1,11 +1,10 @@
-// 768px 미만 모바일 환경에서 표시되는 안내 화면
-// 편지 작성은 모바일에서도 가능하도록 선택적으로 허용
-
+// 접근 제한 안내 화면 (모바일 / 사파리 공용).
+// 케이크 경험은 막지만, 편지 작성·수정은 여기서도 가능하도록 유지.
 import { useState } from 'react';
 import { BIRTHDAY_NAME } from '../constants/config';
 import LetterFormModal from './LetterFormModal';
 
-export default function MobileWarning() {
+export default function AccessWarning({ children }) {
   const [showForm, setShowForm] = useState(false);
   const [editMode, setEditMode] = useState(false);
 
@@ -54,12 +53,9 @@ export default function MobileWarning() {
           fontSize: '0.88rem',
           lineHeight: 1.7,
           marginBottom: '32px',
-          maxWidth: '280px',
+          maxWidth: '300px',
         }}>
-          이 페이지는 태블릿(iPad) 또는<br />
-          PC 환경에서 최적화되어 있어요.<br />
-          더 예쁜 케이크를 보고 싶다면<br />
-          큰 화면으로 접속해주세요 🌟
+          {children}
         </p>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', alignItems: 'center' }}>

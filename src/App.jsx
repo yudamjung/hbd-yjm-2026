@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import CountdownPage from './pages/CountdownPage';
 import CakePage from './pages/CakePage';
-import MobileWarning from './components/MobileWarning';
+import AccessWarning from './components/AccessWarning';
 import { BIRTHDAY_DATE } from './constants/config';
 
 function isBirthday() {
@@ -25,6 +25,12 @@ function isMobile() {
   return window.innerWidth < 768;
 }
 
+// 사파리(데스크톱·iOS) 감지 — Chrome/Edge/Firefox 등은 제외
+function isSafari() {
+  const ua = navigator.userAgent;
+  return /^((?!chrome|android|crios|fxios|edg|opr).)*safari/i.test(ua);
+}
+
 export default function App() {
   const [demoDeadline] = useState(() => (demoMode() ? new Date(Date.now() + 70_000) : undefined));
   const [phase, setPhase] = useState(() =>
@@ -42,9 +48,28 @@ export default function App() {
     setPhase('cake');
   }
 
-  // 모바일: 케이크 페이지는 경고 표시, 카운트다운은 그대로 유지
-  if (mobile && phase === 'cake') {
-    return <MobileWarning />;
+  // 사파리: 배경음악 등 일부 기능이 막혀 Chrome 권장 (전체 차단)
+  if (isSafari()) {
+    return (
+      <AccessWarning>
+        이 사이트는 <b style={{ color: '#ffffffaa' }}>Chrome</b>에 최적화되어 있어요.<br />
+        Safari에서는 배경음악 등 일부 기능이<br />
+        정상 동작하지 않을 수 있어요.<br />
+        Chrome으로 접속해주세요 🌟
+      </AccessWarning>
+    );
+  }
+
+  // 모바일: 카운트다운부터 전체 차단 (편지는 작성 가능)
+  if (mobile) {
+    return (
+      <AccessWarning>
+        이 페이지는 태블릿(iPad) 또는<br />
+        PC(Chrome) 환경에 최적화되어 있어요.<br />
+        더 예쁜 케이크를 보고 싶다면<br />
+        큰 화면으로 접속해주세요 🌟
+      </AccessWarning>
+    );
   }
 
   return (
