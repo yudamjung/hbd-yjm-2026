@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { DECORATIONS, getDecoration } from '../constants/decorations';
 import DecorationPicker, { AnimalSpinPreview } from './DecorationPicker';
+import LetterViewModal from './LetterViewModal';
 import { MAX_LETTER_LENGTH, MAX_LETTERS, BIRTHDAY_NAME } from '../constants/config';
 import { addLetter, updateLetter } from '../utils/storage';
 import { hashPassword, verifyPassword } from '../utils/crypto';
@@ -19,6 +20,8 @@ export default function LetterFormModal({ editMode, letters = [], onClose }) {
   // 메인 스텝: 'auth' | 'writing' | 'decoration' | 'done'
   const [step, setStep] = useState(editMode ? 'auth' : 'writing');
   const [editingId, setEditingId] = useState(null);
+  // 데스크톱 수정: 인증 후 LetterViewModal 수정 패널로 진입 (넓은 작성칸 + 아이템·음악 일괄)
+  const [editTarget, setEditTarget] = useState(null);
 
   // 편지 내용
   const [content, setContent] = useState('');
@@ -53,6 +56,8 @@ export default function LetterFormModal({ editMode, letters = [], onClose }) {
     if (!letter) { setError('해당 이름으로 작성된 편지를 찾을 수 없어요.'); return; }
     const ok = await verifyPassword(inputPw, letter.passwordHash);
     if (!ok) { setError('비밀번호가 일치하지 않아요.'); return; }
+    // 데스크톱: 넓은 작성칸 + 아이템·음악을 한 화면에서 수정하는 패널로 바로 진입
+    if (!isMobile) { setEditTarget(letter); return; }
     setSenderName(letter.name);
     setContent(letter.content);
     setDecoration(letter.decoration);
@@ -113,6 +118,11 @@ export default function LetterFormModal({ editMode, letters = [], onClose }) {
       setError('오류가 발생했어요. 다시 시도해주세요.');
     }
     setSubmitting(false);
+  }
+
+  // 데스크톱 수정: 인증 완료 시 LetterViewModal 수정 패널로 전환
+  if (editTarget) {
+    return <LetterViewModal letter={editTarget} startEditing onClose={onClose} />;
   }
 
   return (

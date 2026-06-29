@@ -13,14 +13,15 @@ const LINE_H = 40;
 const LETTER_FONT = "'MemomentKkukkukk', 'Noto Sans KR', sans-serif";
 const SHORT_NAME = BIRTHDAY_NAME.slice(-2);
 
-export default function LetterViewModal({ letter, isOwner, onClose, onUpdated }) {
-  const [step, setStep] = useState(isOwner ? 'view' : 'auth');
-  const [canEdit, setCanEdit] = useState(false); // 작성자 비번 인증 시 true
+export default function LetterViewModal({ letter, isOwner, onClose, onUpdated, startEditing = false }) {
+  // startEditing: 외부에서 이미 인증된 작성자가 바로 수정 패널로 진입 (카운트다운 편지 수정)
+  const [step, setStep] = useState(isOwner || startEditing ? 'view' : 'auth');
+  const [canEdit, setCanEdit] = useState(startEditing); // 작성자 비번 인증 시 true
   const [pwInput, setPwInput] = useState('');
   const [error, setError] = useState('');
   const [checking, setChecking] = useState(false);
 
-  const [editing, setEditing] = useState(false);
+  const [editing, setEditing] = useState(startEditing);
   const [content, setContent] = useState(letter.content);
   const [decoration, setDecoration] = useState(letter.decoration);
   const [musicRaw, setMusicRaw] = useState(letter.music || '');
