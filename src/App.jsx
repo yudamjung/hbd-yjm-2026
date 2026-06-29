@@ -53,7 +53,7 @@ export default function App() {
     return (
       <AccessWarning>
         이 사이트는 <b style={{ color: '#ffffffaa' }}>Chrome</b>에 최적화되어 있어요.<br />
-        Safari에서는 배경음악 등 일부 기능이<br />
+        Safari에서는 일부 기능이<br />
         정상 동작하지 않을 수 있어요.<br />
         Chrome으로 접속해주세요 🌟
       </AccessWarning>
@@ -66,7 +66,7 @@ export default function App() {
       <AccessWarning>
         이 페이지는 태블릿(iPad) 또는<br />
         PC(Chrome) 환경에 최적화되어 있어요.<br />
-        더 예쁜 케이크를 보고 싶다면<br />
+        더 예쁜 화면으로 보고 싶다면<br />
         큰 화면으로 접속해주세요 🌟
       </AccessWarning>
     );

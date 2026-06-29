@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { DECORATIONS, getDecoration } from '../constants/decorations';
 import DecorationPicker, { AnimalSpinPreview } from './DecorationPicker';
@@ -8,6 +8,7 @@ import { hashPassword, verifyPassword } from '../utils/crypto';
 import { parseYouTube } from '../utils/youtube';
 import YouTubeAudio from './YouTubeAudio';
 import cardLeftImg from '../assets/figma/card-left.png';
+import mobileCardUpImg from '../assets/figma/mobile-card-up.png';
 import iloveyouImg from '../assets/figma/iloveyou.png';
 
 const LINE_H = 46;
@@ -33,6 +34,14 @@ export default function LetterFormModal({ editMode, letters = [], onClose }) {
   const [error, setError] = useState('');
   const [credError, setCredError] = useState('');
   const [submitting, setSubmitting] = useState(false);
+
+  // 모바일에서는 사진 카드 위 / 작성칸 아래 세로 배치
+  const [isMobile, setIsMobile] = useState(() => window.innerWidth < 768);
+  useEffect(() => {
+    const onResize = () => setIsMobile(window.innerWidth < 768);
+    window.addEventListener('resize', onResize);
+    return () => window.removeEventListener('resize', onResize);
+  }, []);
 
   /* ── 수정 모드 인증 ── */
   async function handleAuth(e) {
@@ -119,7 +128,7 @@ export default function LetterFormModal({ editMode, letters = [], onClose }) {
         {step === 'auth' && (
           <motion.div key="auth"
             initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
-            style={whiteBoxStyle}
+            style={{ ...whiteBoxStyle, ...(isMobile && { padding: '28px 22px' }) }}
           >
             <button onClick={onClose} style={closeXStyle}>✕</button>
             <h2 style={modalTitleStyle}>내 편지 수정하기</h2>
@@ -137,40 +146,45 @@ export default function LetterFormModal({ editMode, letters = [], onClose }) {
         {step === 'writing' && (
           <motion.div key="writing"
             initial={{ opacity: 0, scale: 0.96 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0 }}
-            style={{ position: 'relative', width: 'min(920px, calc(100vw - 32px))' }}
+            style={{ position: 'relative', width: isMobile ? 'min(440px, calc(100vw - 32px))' : 'min(920px, calc(100vw - 32px))' }}
           >
             {/* 수정 모드: 카드가 뜨면 저장된 배경음악 재생 */}
             {editingId && parseYouTube(musicUrl) && (
               <YouTubeAudio videoId={parseYouTube(musicUrl).id} start={parseYouTube(musicUrl).start} />
             )}
-            {/* 카드 본체 */}
+            {/* 카드 본체 — 모바일: 이미지 위 / 작성칸 아래 */}
             <div style={{
               display: 'flex',
+              flexDirection: isMobile ? 'column' : 'row',
               width: '100%',
-              aspectRatio: '972 / 703',
+              ...(isMobile ? {} : { aspectRatio: '972 / 703' }),
               borderRadius: 12,
               overflow: 'hidden',
               boxShadow: '0 24px 80px rgba(0,0,0,0.8)',
             }}>
-              {/* 왼쪽: 이미지 */}
-              <div style={{ width: '45%', flexShrink: 0 }}>
-                <img src={cardLeftImg} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
-              </div>
+              {/* 이미지 — 데스크톱: 왼쪽 / 모바일: 상단 */}
+              {isMobile ? (
+                <img src={mobileCardUpImg} alt="" style={{ width: '100%', aspectRatio: '881 / 429', objectFit: 'cover', display: 'block' }} />
+              ) : (
+                <div style={{ width: '45%', flexShrink: 0 }}>
+                  <img src={cardLeftImg} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+                </div>
+              )}
 
-              {/* 오른쪽: 노트지 */}
+              {/* 노트지 */}
               <div style={{
                 flex: 1,
                 background: '#fff',
                 position: 'relative',
                 display: 'flex',
                 flexDirection: 'column',
-                padding: '5% 6% 5% 5%',
+                padding: isMobile ? '18px 20px 14px' : '5% 6% 5% 5%',
                 overflow: 'hidden',
               }}>
                 {/* i love you 이미지 — 우상단 고정 */}
                 <img src={iloveyouImg} alt="" style={{
                   position: 'absolute', top: 0, right: 0,
-                  height: '55%', width: 'auto',
+                  height: isMobile ? '30%' : '55%', width: 'auto',
                   objectFit: 'contain',
                   pointerEvents: 'none', zIndex: 1,
                 }} />
@@ -186,8 +200,8 @@ export default function LetterFormModal({ editMode, letters = [], onClose }) {
                   <div style={{ flex: 1, borderBottom: '1px solid #bbb', marginLeft: 4, marginRight: '35%' }} />
                 </div>
 
-                {/* 점선 노트 + textarea */}
-                <div style={{ position: 'relative', flex: 1, zIndex: 2 }}>
+                {/* 점선 노트 + textarea (모바일은 확정 높이로 5줄 확보) */}
+                <div style={{ position: 'relative', flex: 1, zIndex: 2, ...(isMobile && { flex: 'none', height: LINE_H * 5 }) }}>
                   <div style={{
                     position: 'absolute', inset: 0,
                     backgroundImage: `repeating-linear-gradient(
@@ -208,7 +222,8 @@ export default function LetterFormModal({ editMode, letters = [], onClose }) {
                     placeholder={'이곳을 클릭하면\n편지를 작성할 수 있습니다.'}
                     style={{
                       position: 'relative', zIndex: 1,
-                      width: '68%',
+                      display: 'block',
+                      width: isMobile ? '80%' : '68%',
                       height: '100%',
                       background: 'transparent',
                       border: 'none', outline: 'none', resize: 'none',
@@ -283,7 +298,7 @@ export default function LetterFormModal({ editMode, letters = [], onClose }) {
                     initial={{ opacity: 0, scale: 0.92, y: 12 }}
                     animate={{ opacity: 1, scale: 1, y: 0 }}
                     exit={{ opacity: 0, scale: 0.92 }}
-                    style={whiteBoxStyle}
+                    style={{ ...whiteBoxStyle, ...(isMobile && { padding: '28px 22px' }) }}
                     onClick={e => e.stopPropagation()}
                   >
                     <button onClick={() => setShowCredModal(false)} style={closeXStyle}>✕</button>
@@ -427,6 +442,7 @@ const modalTitleStyle = {
   textAlign: 'center',
   margin: '0 0 10px',
   lineHeight: 1.5,
+  wordBreak: 'keep-all',
 };
 
 const modalSubStyle = {
@@ -436,6 +452,7 @@ const modalSubStyle = {
   textAlign: 'center',
   lineHeight: 1.7,
   margin: '0 0 24px',
+  wordBreak: 'keep-all',
 };
 
 const credRowStyle = {
@@ -458,6 +475,8 @@ const credLabelStyle = {
 
 const credInputStyle = {
   flex: 1,
+  minWidth: 0,
+  boxSizing: 'border-box',
   background: '#f4f4f4',
   border: 'none',
   borderRadius: 8,
