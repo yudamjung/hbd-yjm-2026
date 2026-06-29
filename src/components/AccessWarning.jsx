@@ -1,12 +1,20 @@
 // 접근 제한 안내 화면 (모바일 / 사파리 공용).
 // 케이크 경험은 막지만, 편지 작성·수정은 여기서도 가능하도록 유지.
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { BIRTHDAY_NAME } from '../constants/config';
+import { subscribeLetters } from '../utils/storage';
 import LetterFormModal from './LetterFormModal';
 
 export default function AccessWarning({ children }) {
   const [showForm, setShowForm] = useState(false);
   const [editMode, setEditMode] = useState(false);
+  const [letters, setLetters] = useState([]);
+
+  // 수정 시 이름으로 편지를 찾으려면 편지 목록이 필요
+  useEffect(() => {
+    const unsubscribe = subscribeLetters(setLetters);
+    return () => unsubscribe();
+  }, []);
 
   return (
     <div style={{
@@ -93,6 +101,7 @@ export default function AccessWarning({ children }) {
       {showForm && (
         <LetterFormModal
           editMode={editMode}
+          letters={letters}
           onClose={() => { setShowForm(false); setEditMode(false); }}
         />
       )}
