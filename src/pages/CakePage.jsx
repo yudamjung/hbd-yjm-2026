@@ -4,7 +4,7 @@ import Cake3D from '../components/Cake3D';
 import LetterViewModal from '../components/LetterViewModal';
 import VolumeHint from '../components/VolumeHint';
 import { getDecoration } from '../constants/decorations';
-import { subscribeLetters, isCandleBlown, setCandleBlown } from '../utils/storage';
+import { subscribeLetters, isCandleBlown, setCandleBlown, setCandleLit } from '../utils/storage';
 import { createBirthdaySong } from '../utils/birthdaySong';
 import { parseYouTube } from '../utils/youtube';
 import { BIRTHDAY_NAME, BIRTHDAY_AGE, OWNER_KEY } from '../constants/config';
@@ -151,6 +151,11 @@ export default function CakePage() {
     setCandleBlown();
   }
 
+  function relightCandle() {
+    setBlown(false);
+    setCandleLit();
+  }
+
   const cakeRef = useRef(null);
 
   return (
@@ -251,13 +256,29 @@ export default function CakePage() {
       )}
 
       {blown && (
-        <motion.p
+        <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          style={{ marginTop: '20px', color: '#ffd70099', fontSize: '0.9rem', zIndex: 1 }}
+          style={{ marginTop: '20px', zIndex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px' }}
         >
-          🌟 소원이 이루어지길!
-        </motion.p>
+          <p style={{ margin: 0, color: '#ffd70099', fontSize: '0.9rem' }}>
+            🌟 소원이 이루어지길!
+          </p>
+          <button
+            onClick={relightCandle}
+            style={{
+              background: '#ffffff11',
+              border: '1px solid #ffffff33',
+              borderRadius: '30px',
+              padding: '8px 20px',
+              color: '#fff',
+              cursor: 'pointer',
+              fontSize: '0.85rem',
+            }}
+          >
+            🔥 다시 불 붙이기
+          </button>
+        </motion.div>
       )}
 
       {/* 편지 수 */}

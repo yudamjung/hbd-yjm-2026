@@ -74,3 +74,7 @@ export function isCandleBlown() {
 export function setCandleBlown() {
   localStorage.setItem(CANDLE_KEY, 'true');
 }
+
+export function setCandleLit() {
+  localStorage.removeItem(CANDLE_KEY);
+}
