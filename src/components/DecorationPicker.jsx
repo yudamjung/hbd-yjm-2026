@@ -25,9 +25,12 @@ function MiniCanvas({ type }) {
   );
 }
 
-export default function DecorationPicker({ selected, onSelect }) {
+export default function DecorationPicker({ selected, onSelect, isMobile = false }) {
+  const cardW = isMobile ? 132 : 168;
+  const cardH = isMobile ? 162 : 204;
+  const canvasH = isMobile ? 118 : 152;
   return (
-    <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap', justifyContent: 'center', width: '100%' }}>
+    <div style={{ display: 'flex', gap: isMobile ? 10 : 14, flexWrap: 'wrap', justifyContent: 'center', width: '100%' }}>
       {DECORATIONS.map((d) => {
         const on = selected === d.id;
         return (
@@ -36,7 +39,7 @@ export default function DecorationPicker({ selected, onSelect }) {
             type="button"
             onClick={() => onSelect(d.id)}
             style={{
-              width: 168, height: 204, borderRadius: 20, padding: '12px 0 0',
+              width: cardW, height: cardH, borderRadius: 20, padding: '12px 0 0',
               border: `2px solid ${on ? '#f3a9c4' : '#ffffff22'}`,
               background: on ? 'rgba(243,169,196,0.12)' : '#1c1c1c',
               cursor: 'pointer', overflow: 'hidden',
@@ -45,7 +48,7 @@ export default function DecorationPicker({ selected, onSelect }) {
               display: 'flex', flexDirection: 'column', alignItems: 'center',
             }}
           >
-            <div style={{ width: '100%', height: 152, pointerEvents: 'none' }}>
+            <div style={{ width: '100%', height: canvasH, pointerEvents: 'none' }}>
               <MiniCanvas type={d.id} />
             </div>
             <span style={{ color: on ? '#fff' : '#ddd', fontSize: '0.88rem', fontWeight: 700 }}>{d.label}</span>

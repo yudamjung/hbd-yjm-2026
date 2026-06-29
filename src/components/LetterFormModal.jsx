@@ -119,9 +119,13 @@ export default function LetterFormModal({ editMode, letters = [], onClose }) {
     <div style={{
       position: 'fixed', inset: 0, zIndex: 100,
       background: '#000',
-      display: 'flex', alignItems: 'center', justifyContent: 'center',
-      padding: '16px',
+      overflowY: 'auto',
     }}>
+      <div style={{
+        minHeight: '100%', boxSizing: 'border-box',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        padding: '16px',
+      }}>
       <AnimatePresence mode="wait">
 
         {/* ── 수정 모드 인증 ── */}
@@ -343,7 +347,7 @@ export default function LetterFormModal({ editMode, letters = [], onClose }) {
         {step === 'decoration' && (
           <motion.div key="decoration"
             initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 36 }}
+            style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: isMobile ? 20 : 36 }}
           >
             <h2 style={{ color: '#fff', fontSize: 'clamp(1.2rem, 3vw, 1.8rem)', fontWeight: 800, margin: 0 }}>
               케이크에 올릴 친구를 고르세요
@@ -352,7 +356,7 @@ export default function LetterFormModal({ editMode, letters = [], onClose }) {
 
             {/* 빙글빙글 도는 3D 후보들 */}
             <div style={{ width: 'min(940px, 94vw)' }}>
-              <DecorationPicker selected={decoration} onSelect={setDecoration} />
+              <DecorationPicker selected={decoration} onSelect={setDecoration} isMobile={isMobile} />
             </div>
 
             <p style={{ color: '#fff', fontSize: '1rem', fontWeight: 700, margin: 0, minHeight: 24 }}>
@@ -415,6 +419,7 @@ export default function LetterFormModal({ editMode, letters = [], onClose }) {
         )}
 
       </AnimatePresence>
+      </div>
     </div>
   );
 }
