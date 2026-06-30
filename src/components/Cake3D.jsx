@@ -148,18 +148,41 @@ function Dollop({ color = C.side }) {
 }
 
 // ── 촛불 불꽃 ──────────────────────────────────────────
-function Flame({ position }) {
+// 물방울(눈물방울) 불꽃 단면 — 아래는 둥글고 위로 갈수록 뾰족 (Y축 회전체)
+const FLAME_PROFILE = [
+  [0, 0], [0.03, 0.015], [0.052, 0.05], [0.058, 0.1],
+  [0.05, 0.15], [0.032, 0.2], [0.014, 0.235], [0, 0.26],
+].map(([x, y]) => new THREE.Vector2(x, y));
+
+function Flame({ position, phase = 0 }) {
+  const swayRef = useRef();
+  const lightRef = useRef();
+  useFrame((state) => {
+    const t = state.clock.elapsedTime;
+    if (swayRef.current) {
+      // 밑동(심지 끝)을 축으로 바람에 살랑이는 흔들림 + 일렁임
+      swayRef.current.rotation.z = Math.sin(t * 2.6 + phase) * 0.13 + Math.sin(t * 6.1 + phase) * 0.05;
+      swayRef.current.rotation.x = Math.sin(t * 1.9 + phase * 1.3) * 0.07;
+      swayRef.current.scale.y = 1 + Math.sin(t * 11 + phase) * 0.06 + Math.sin(t * 19 + phase) * 0.03;
+    }
+    if (lightRef.current) {
+      lightRef.current.intensity = 2.2 + Math.sin(t * 13 + phase) * 0.4;
+    }
+  });
   return (
     <group position={position}>
-      <mesh>
-        <coneGeometry args={[0.06, 0.24, 12]} />
-        <meshStandardMaterial color="#ffd27f" emissive="#ffb347" emissiveIntensity={2.2} toneMapped={false} />
-      </mesh>
-      <mesh position={[0, -0.02, 0]} scale={0.5}>
-        <coneGeometry args={[0.05, 0.2, 12]} />
-        <meshStandardMaterial color="#fff7e0" emissive="#fff" emissiveIntensity={2.6} toneMapped={false} />
-      </mesh>
-      <pointLight color="#ffb866" intensity={2.2} distance={4.5} decay={2} />
+      {/* swayRef 원점 = 불꽃 밑동 → 밑동을 축으로 회전 */}
+      <group ref={swayRef}>
+        <mesh>
+          <latheGeometry args={[FLAME_PROFILE, 16]} />
+          <meshStandardMaterial color="#ffd27f" emissive="#ffb347" emissiveIntensity={2.2} toneMapped={false} />
+        </mesh>
+        <mesh position={[0, 0.03, 0]} scale={[0.55, 0.82, 0.55]}>
+          <latheGeometry args={[FLAME_PROFILE, 16]} />
+          <meshStandardMaterial color="#fff7e0" emissive="#fff" emissiveIntensity={2.6} toneMapped={false} />
+        </mesh>
+      </group>
+      <pointLight ref={lightRef} color="#ffb866" intensity={2.2} distance={4.5} decay={2} />
     </group>
   );
 }
@@ -221,9 +244,9 @@ function NumberCandle({ lit }) {
               <group position={[tipX, 0.54, 0]} rotation={[0, 0, mirror ? -0.14 : 0.14]}>
                 <mesh position={[0, 0.08, 0]}>
                   <cylinderGeometry args={[0.016, 0.011, 0.18, 8]} />
-                  <meshStandardMaterial color="#241a12" roughness={0.95} />
+                  <meshStandardMaterial color="#f5f2ec" roughness={0.85} />
                 </mesh>
-                <Flame position={[0, 0.25, 0]} />
+                <Flame position={[0, 0.13, 0]} phase={i * 2.1} />
               </group>
             )}
           </group>
