@@ -82,10 +82,19 @@ export default function CakePage() {
   }, []);
 
   function toggleMute() {
+    const song = songRef.current;
+    if (!song) return;
+    // 자동재생이 막혀 아직 안 켜졌으면, 이 탭을 제스처 삼아 재생 시작 + 소리 켜기
+    if (!song.running) {
+      setMuted(false);
+      song.setMuted(false);
+      song.start();
+      return;
+    }
     const next = !muted;
     setMuted(next);
-    songRef.current?.setMuted(next);
-    if (!next) songRef.current?.start();
+    song.setMuted(next);
+    if (!next) song.start();
   }
 
   // 편지에 배경음악이 있으면 카드 열린 동안 생일축하 피아노는 음소거
