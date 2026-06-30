@@ -25,12 +25,6 @@ function isMobile() {
   return window.innerWidth < 768;
 }
 
-// 사파리(데스크톱·iOS) 감지 — Chrome/Edge/Firefox 등은 제외
-function isSafari() {
-  const ua = navigator.userAgent;
-  return /^((?!chrome|android|crios|fxios|edg|opr).)*safari/i.test(ua);
-}
-
 export default function App() {
   const [demoDeadline] = useState(() => (demoMode() ? new Date(Date.now() + 70_000) : undefined));
   const [phase, setPhase] = useState(() =>
@@ -46,18 +40,6 @@ export default function App() {
 
   function handleExpire() {
     setPhase('cake');
-  }
-
-  // 사파리: 배경음악 등 일부 기능이 막혀 Chrome 권장 (전체 차단)
-  if (isSafari()) {
-    return (
-      <AccessWarning>
-        이 사이트는 <b style={{ color: '#ffffffaa' }}>Chrome</b>에 최적화되어 있어요.<br />
-        Safari에서는 일부 기능이<br />
-        정상 동작하지 않을 수 있어요.<br />
-        Chrome으로 접속해주세요 🌟
-      </AccessWarning>
-    );
   }
 
   // 모바일: 카운트다운부터 전체 차단 (편지는 작성 가능)
