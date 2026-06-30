@@ -216,14 +216,14 @@ function NumberCandle({ lit }) {
               <cylinderGeometry args={[0.028, 0.022, 0.5, 10]} />
               <meshStandardMaterial color="#ece2d2" roughness={0.6} />
             </mesh>
-            {/* 심지 + 그 위에 불꽃 */}
+            {/* 심지 + 심지 끝에 붙는 불꽃 (안쪽으로 살짝 기울여 하트답게) */}
             {lit && (
-              <group position={[tipX, 0.5, 0]}>
-                <mesh position={[0, 0.04, 0]}>
-                  <cylinderGeometry args={[0.013, 0.013, 0.13, 8]} />
-                  <meshStandardMaterial color="#2b2117" roughness={0.9} />
+              <group position={[tipX, 0.54, 0]} rotation={[0, 0, mirror ? -0.14 : 0.14]}>
+                <mesh position={[0, 0.08, 0]}>
+                  <cylinderGeometry args={[0.016, 0.011, 0.18, 8]} />
+                  <meshStandardMaterial color="#241a12" roughness={0.95} />
                 </mesh>
-                <Flame position={[0, 0.12, 0]} />
+                <Flame position={[0, 0.25, 0]} />
               </group>
             )}
           </group>
