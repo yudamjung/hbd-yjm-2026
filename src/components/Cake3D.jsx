@@ -176,9 +176,10 @@ const D2_R = 0.082;
 const D2_START = D2_PTS[0].toArray();
 const D2_END = D2_PTS[D2_PTS.length - 1].toArray();
 
-function Digit2({ x }) {
+function Digit2({ x, mirror = false }) {
   return (
-    <group position={[x, 0, 0]}>
+    // mirror: 자기 중심에서 Y축 180° 회전 → 좌우 반전(하트 한쪽)
+    <group position={[x, 0, 0]} rotation={mirror ? [0, Math.PI, 0] : undefined}>
       <mesh>
         <tubeGeometry args={[D2_CURVE, 90, D2_R, 12, false]} />
         <meshStandardMaterial color={C.candle} roughness={0.35} />
@@ -199,16 +200,35 @@ function Digit2({ x }) {
 function NumberCandle({ lit }) {
   const num = String(BIRTHDAY_AGE || 22); // 요구사항: 22
   const digits = num.split('');
-  const gap = 0.58;
+  const gap = 0.62; // 하트 사이를 손톱만큼 더 띄움
   const startX = -((digits.length - 1) * gap) / 2;
   return (
-    <group position={[0, TOP_Y + 0.42, -0.15]}>
-      {digits.map((d, i) => (
-        <group key={i}>
-          <Digit2 x={startX + i * gap} />
-          {lit && <Flame position={[startX + i * gap - 0.04, 0.66, 0]} />}
-        </group>
-      ))}
+    <group position={[0, TOP_Y + 0.6, -0.15]}>
+      {digits.map((d, i) => {
+        const cx = startX + i * gap;
+        const mirror = i === 0; // 왼쪽 숫자만 좌우 반전 → 두 '2'가 하트 모양
+        const tipX = cx + (mirror ? 0.04 : -0.04); // 심지가 나오는 윗부분
+        return (
+          <group key={i}>
+            <Digit2 x={cx} mirror={mirror} />
+            {/* 숫자 밑에 케이크로 꽂는 고정 핀 */}
+            <mesh position={[cx, -0.64, 0]}>
+              <cylinderGeometry args={[0.028, 0.022, 0.5, 10]} />
+              <meshStandardMaterial color="#ece2d2" roughness={0.6} />
+            </mesh>
+            {/* 심지 + 그 위에 불꽃 */}
+            {lit && (
+              <group position={[tipX, 0.5, 0]}>
+                <mesh position={[0, 0.04, 0]}>
+                  <cylinderGeometry args={[0.013, 0.013, 0.13, 8]} />
+                  <meshStandardMaterial color="#2b2117" roughness={0.9} />
+                </mesh>
+                <Flame position={[0, 0.12, 0]} />
+              </group>
+            )}
+          </group>
+        );
+      })}
     </group>
   );
 }
