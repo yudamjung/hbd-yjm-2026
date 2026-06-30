@@ -293,85 +293,39 @@ export default function CakePage() {
         </motion.p>
       )}
 
-      {/* 오너 + 전체 목록 */}
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: entered ? 1 : 0 }}
-        transition={{ delay: 2.2 }}
-        style={{ marginTop: '12px', zIndex: 1, display: 'flex', gap: '12px', flexWrap: 'wrap', justifyContent: 'center' }}
-      >
+      {/* 생일자 안내: 케이크 위 친구 클릭 (작은 고정 힌트 한 줄) */}
+      {isOwner && letters.length > 0 && (
+        <motion.p
+          initial={{ opacity: 0 }}
+          animate={{ opacity: entered ? 1 : 0 }}
+          transition={{ delay: 2.2 }}
+          style={{ marginTop: '6px', color: '#ffffff33', fontSize: '0.78rem', zIndex: 1 }}
+        >
+          🎁 케이크 위 친구를 누르면 편지를 볼 수 있어요
+        </motion.p>
+      )}
+
+      {/* 우측 상단 메뉴바 (음악 · 영상 · 편지보기/로그인) */}
+      <div style={{
+        position: 'fixed', top: '20px', right: '20px', zIndex: 10,
+        display: 'flex', alignItems: 'center', gap: '14px',
+      }}>
+        <MenuBarButton onClick={toggleMute} title={muted ? '음악 켜기' : '음악 끄기'}>
+          {muted ? '🔇' : '🔊'}
+        </MenuBarButton>
+        <MenuBarButton onClick={() => setShowVideo(true)} title="생일 영상 다시 보기">
+          🎬
+        </MenuBarButton>
         {isOwner ? (
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px' }}>
-            {letters.length > 0 && (
-              <p style={{ color: '#ffd700aa', fontSize: '0.9rem', margin: 0 }}>
-                🎁 케이크 위 친구들을 눌러 편지를 확인해보세요
-              </p>
-            )}
-            <button
-              onClick={() => setShowLetterList(true)}
-              style={subtleLink}
-            >
-              편지 전체 보기
-            </button>
-          </div>
+          <MenuBarButton onClick={() => setShowLetterList(true)} title="편지 전체 보기">
+            📋
+          </MenuBarButton>
         ) : (
-          <button
-            onClick={() => setOwnerPrompt(true)}
-            style={ghostBtn}
-          >
-            🔑 생일자 로그인
-          </button>
+          <MenuBarButton onClick={() => setOwnerPrompt(true)} title="생일자 로그인">
+            🔑
+          </MenuBarButton>
         )}
-      </motion.div>
-
-      {/* 음악 켜기/끄기 (우측 상단) */}
-      <button
-        onClick={toggleMute}
-        title={muted ? '음악 켜기' : '음악 끄기'}
-        style={{
-          position: 'fixed',
-          top: '24px',
-          right: '24px',
-          background: 'none',
-          border: 'none',
-          cursor: 'pointer',
-          opacity: 0.5,
-          transition: 'opacity 0.2s',
-          zIndex: 10,
-          padding: '4px',
-          fontSize: '1.4rem',
-          lineHeight: 1,
-        }}
-        onMouseEnter={e => e.currentTarget.style.opacity = '0.95'}
-        onMouseLeave={e => e.currentTarget.style.opacity = '0.5'}
-      >
-        {muted ? '🔇' : '🔊'}
-      </button>
-
-      {/* 영상 재생 버튼 (투명 아이콘, 우측 하단) */}
-      <button
-        onClick={() => setShowVideo(true)}
-        title="생일 영상 다시 보기"
-        style={{
-          position: 'fixed',
-          bottom: '24px',
-          right: '24px',
-          background: 'none',
-          border: 'none',
-          cursor: 'pointer',
-          opacity: 0.45,
-          transition: 'opacity 0.2s',
-          zIndex: 10,
-          padding: '4px',
-        }}
-        onMouseEnter={e => e.currentTarget.style.opacity = '0.9'}
-        onMouseLeave={e => e.currentTarget.style.opacity = '0.45'}
-      >
-        <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
-          <circle cx="16" cy="16" r="15" stroke="white" strokeWidth="1.5" />
-          <path d="M13 10.5L22 16L13 21.5V10.5Z" fill="white" />
-        </svg>
-      </button>
+      </div>
 
       {/* 생일 영상 다시 보기 모달 */}
       <AnimatePresence>
@@ -572,24 +526,31 @@ export default function CakePage() {
   );
 }
 
-const ghostBtn = {
-  background: 'none',
-  border: '1px solid #ffffff22',
-  borderRadius: '20px',
-  padding: '6px 16px',
-  color: '#ffffff55',
-  fontSize: '0.8rem',
-  cursor: 'pointer',
-};
-
-const subtleLink = {
+const menuIconBtn = {
   background: 'none',
   border: 'none',
-  color: '#ffffff33',
-  fontSize: '0.75rem',
   cursor: 'pointer',
-  textDecoration: 'underline',
+  opacity: 0.5,
+  transition: 'opacity 0.2s',
+  padding: '4px',
+  fontSize: '1.4rem',
+  lineHeight: 1,
 };
+
+// 우측 상단 메뉴바 아이콘 버튼 (호버 시 또렷해짐)
+function MenuBarButton({ onClick, title, children }) {
+  return (
+    <button
+      onClick={onClick}
+      title={title}
+      style={menuIconBtn}
+      onMouseEnter={e => (e.currentTarget.style.opacity = '0.95')}
+      onMouseLeave={e => (e.currentTarget.style.opacity = '0.5')}
+    >
+      {children}
+    </button>
+  );
+}
 
 function Stars() {
   const stars = Array.from({ length: 80 }, (_, i) => ({
