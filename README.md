@@ -9,8 +9,9 @@
 <br/>
 
 <p>
-  <img src="https://github.com/user-attachments/assets/a2931044-9ee1-4ce5-bcbe-b062f291849e" width="420" />
-  <img src="https://github.com/user-attachments/assets/9d2d0026-8b7e-4a0c-8380-4da1d455b3c3" width="420" />
+  <img src="https://github.com/user-attachments/assets/a2931044-9ee1-4ce5-bcbe-b062f291849e" width="45%" />
+  <img width="45%" src="https://github.com/user-attachments/assets/1cb3c6f3-10e7-4c3a-9a7f-891c368f4e81" />
+
 </p>
 
 🎂 🎈 🎉 🎂
