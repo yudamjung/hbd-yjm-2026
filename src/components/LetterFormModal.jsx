@@ -274,8 +274,11 @@ export default function LetterFormModal({ editMode, letters = [], onClose }) {
                   </span>
                 </div>
 
-                {/* 글자 수 */}
-                <div style={{ position: 'absolute', bottom: 6, left: 10, fontSize: '0.68rem', color: '#bbb', zIndex: 3 }}>
+                {/* 글자 수 — 데스크톱: 하단 절대 배치 / 모바일: From. 아래 일반 배치 */}
+                <div style={isMobile
+                  ? { textAlign: 'right', marginTop: 4, fontSize: '0.72rem', color: '#bbb', position: 'relative', zIndex: 3 }
+                  : { position: 'absolute', bottom: 6, left: 10, fontSize: '0.68rem', color: '#bbb', zIndex: 3 }
+                }>
                   {content.length}/{MAX_LETTER_LENGTH}
                 </div>
 
