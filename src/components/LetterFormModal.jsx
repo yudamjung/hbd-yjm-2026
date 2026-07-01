@@ -4,7 +4,7 @@ import { DECORATIONS, getDecoration } from '../constants/decorations';
 import DecorationPicker, { AnimalSpinPreview } from './DecorationPicker';
 import LetterViewModal from './LetterViewModal';
 import { MAX_LETTER_LENGTH, MAX_LETTERS, BIRTHDAY_NAME } from '../constants/config';
-import { addLetter, updateLetter } from '../utils/storage';
+import { addLetter, updateLetter, saveLetterDraft, loadLetterDraft, clearLetterDraft } from '../utils/storage';
 import { hashPassword, verifyPassword } from '../utils/crypto';
 import { parseYouTube } from '../utils/youtube';
 import YouTubeAudio from './YouTubeAudio';
@@ -33,6 +33,33 @@ export default function LetterFormModal({ editMode, letters = [], onClose }) {
   // From. 클릭으로 열리는 이름/비번 모달 (카드 위 오버레이)
   const [showCredModal, setShowCredModal] = useState(false);
   const credSet = senderName !== ''; // 이름/비번이 설정됐는지
+
+  // 임시 저장(드래프트) — 새 편지 작성 시에만 사용
+  const [draftPrompt, setDraftPrompt] = useState(() => !editMode && !!loadLetterDraft());
+  const [draftName, setDraftName] = useState(''); // 복원 시 이름/비번 모달에 미리 채울 이름
+  const [savedNotice, setSavedNotice] = useState(false); // 임시 저장 완료 안내
+
+  function handleSaveDraft() {
+    saveLetterDraft({ content, senderName, decoration, music: musicUrl });
+    setSavedNotice(true);
+    setTimeout(() => setSavedNotice(false), 1600);
+  }
+
+  function restoreDraft() {
+    const d = loadLetterDraft();
+    if (d) {
+      setContent(d.content || '');
+      setDecoration(d.decoration || DECORATIONS[0].id);
+      setMusicUrl(d.music || '');
+      setDraftName(d.senderName || ''); // 비번은 저장 안 했으므로 From. 에서 다시 입력
+    }
+    setDraftPrompt(false);
+  }
+
+  function startFresh() {
+    clearLetterDraft();
+    setDraftPrompt(false);
+  }
 
   const [error, setError] = useState('');
   const [credError, setCredError] = useState('');
@@ -113,6 +140,7 @@ export default function LetterFormModal({ editMode, letters = [], onClose }) {
         if (!result.ok) { setError('자리가 모두 찼어요 🎂'); setSubmitting(false); return; }
       }
       setDecoration(decoId);
+      clearLetterDraft(); // 저장 완료됐으니 임시 저장본 제거
       setStep('done');
     } catch {
       setError('오류가 발생했어요. 다시 시도해주세요.');
@@ -293,6 +321,13 @@ export default function LetterFormModal({ editMode, letters = [], onClose }) {
 
             {/* 닫기 버튼 */}
             <button onClick={onClose} style={{ ...floatBtnStyle, top: -14, right: -14 }}>✕</button>
+            {/* 임시 저장 버튼 — 작성 중이던 내용을 이 기기에 보관 */}
+            <button
+              onClick={handleSaveDraft}
+              style={{ ...floatBtnStyle, bottom: -14, left: -14, width: 'auto', padding: '0 16px', borderRadius: 19, fontSize: '0.82rem' }}
+            >
+              {savedNotice ? '저장됨 ✓' : '임시 저장'}
+            </button>
             {/* 화살표 버튼 */}
             <button onClick={handleArrow} style={{ ...floatBtnStyle, bottom: -14, right: -14, fontSize: '1.1rem' }}>→</button>
 
@@ -330,7 +365,7 @@ export default function LetterFormModal({ editMode, letters = [], onClose }) {
                         <span style={credLabelStyle}>작성자 이름</span>
                         <input
                           name="credName"
-                          defaultValue={senderName}
+                          defaultValue={senderName || draftName}
                           style={credInputStyle}
                           autoFocus
                           placeholder="이름을 입력해주세요"
@@ -431,6 +466,38 @@ export default function LetterFormModal({ editMode, letters = [], onClose }) {
           </motion.div>
         )}
 
+      </AnimatePresence>
+
+      {/* ── 임시 저장본 복원 안내 (모달 열 때 드래프트가 있으면) ── */}
+      <AnimatePresence>
+        {draftPrompt && (
+          <motion.div
+            key="draft-overlay"
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            style={{
+              position: 'fixed', inset: 0,
+              background: 'rgba(0,0,0,0.6)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              zIndex: 250, padding: '16px',
+            }}
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.92, y: 12 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.92 }}
+              style={{ ...whiteBoxStyle, ...(isMobile && { padding: '28px 22px' }) }}
+            >
+              <h2 style={modalTitleStyle}>작성 중이던 편지가 있어요</h2>
+              <p style={modalSubStyle}>
+                이어서 작성하시겠어요?<br />비밀번호는 다시 입력해주세요.
+              </p>
+              <button onClick={restoreDraft} style={sageBtn}>이어서 작성</button>
+              <button onClick={startFresh} style={{ ...sageBtn, background: '#eee', color: '#666' }}>
+                새로 쓰기
+              </button>
+            </motion.div>
+          </motion.div>
+        )}
       </AnimatePresence>
       </div>
     </div>

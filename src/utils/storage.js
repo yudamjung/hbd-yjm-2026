@@ -3,6 +3,7 @@ import { collection, getDocs, addDoc, updateDoc, doc, onSnapshot } from 'firebas
 import { getAvailableSlot } from '../constants/slots';
 
 const CANDLE_KEY = 'hbd_candle_blown';
+const LETTER_DRAFT_KEY = 'hbd_letter_draft';
 const LETTERS = 'letters';
 
 // --- 편지 CRUD (Firestore) ---
@@ -63,6 +64,29 @@ export async function updateLetter(id, { content, decoration, music }) {
 export async function findLetterByName(name, existingLetters) {
   const letters = existingLetters || (await getLetters());
   return letters.find((l) => l.name.trim().toLowerCase() === name.trim().toLowerCase()) || null;
+}
+
+// --- 편지 임시 저장 (작성 중이던 내용을 이 기기에 보관, 비밀번호는 저장 안 함) ---
+
+export function saveLetterDraft(draft) {
+  try {
+    localStorage.setItem(LETTER_DRAFT_KEY, JSON.stringify(draft));
+  } catch (e) {
+    console.error('임시 저장 오류:', e);
+  }
+}
+
+export function loadLetterDraft() {
+  try {
+    const raw = localStorage.getItem(LETTER_DRAFT_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
+}
+
+export function clearLetterDraft() {
+  localStorage.removeItem(LETTER_DRAFT_KEY);
 }
 
 // --- 촛불 상태 (기기별로 기억하도록 localStorage 유지) ---
