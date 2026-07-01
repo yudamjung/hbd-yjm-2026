@@ -2,12 +2,13 @@ import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Cake3D from '../components/Cake3D';
 import LetterViewModal from '../components/LetterViewModal';
+import LetterFormModal from '../components/LetterFormModal';
 import VolumeHint from '../components/VolumeHint';
 import { getDecoration } from '../constants/decorations';
 import { subscribeLetters, isCandleBlown, setCandleBlown, setCandleLit } from '../utils/storage';
 import { createBirthdaySong } from '../utils/birthdaySong';
 import { parseYouTube } from '../utils/youtube';
-import { BIRTHDAY_NAME, BIRTHDAY_AGE, OWNER_KEY } from '../constants/config';
+import { BIRTHDAY_NAME, BIRTHDAY_AGE, OWNER_KEY, LETTER_DEADLINE } from '../constants/config';
 
 export default function CakePage() {
   const [letters, setLetters] = useState([]);
@@ -34,7 +35,10 @@ export default function CakePage() {
   const [ownerInput, setOwnerInput] = useState('');
   const [ownerError, setOwnerError] = useState('');
   const [showLetterList, setShowLetterList] = useState(false);
+  const [showForm, setShowForm] = useState(false);
   const [showVideo, setShowVideo] = useState(false);
+  // 편지 작성 마감 전에만 케이크 페이지에서 새 편지 작성 가능 (7/2 23:59:59까지)
+  const canWriteLetter = Date.now() < LETTER_DEADLINE.getTime();
   const [entered, setEntered] = useState(false);
   const [muted, setMuted] = useState(false);
   const [volumeHint, setVolumeHint] = useState(0); // 값이 바뀌면 볼륨 안내 토스트 재표시
@@ -319,6 +323,11 @@ export default function CakePage() {
         position: 'fixed', top: '20px', right: '20px', zIndex: 10,
         display: 'flex', alignItems: 'center', gap: '14px',
       }}>
+        {canWriteLetter && (
+          <MenuBarButton onClick={() => setShowForm(true)} title="편지 남기기">
+            📮
+          </MenuBarButton>
+        )}
         <MenuBarButton onClick={toggleMute} title={muted ? '음악 켜기' : '음악 끄기'}>
           {muted ? '🔇' : '🔊'}
         </MenuBarButton>
@@ -519,6 +528,15 @@ export default function CakePage() {
           </div>
         )}
       </AnimatePresence>
+
+      {/* 편지 작성 모달 (카운트다운과 동일 — 데코·배경음악 선택 포함) */}
+      {showForm && (
+        <LetterFormModal
+          editMode={false}
+          letters={letters}
+          onClose={() => setShowForm(false)}
+        />
+      )}
 
       {/* 편지 열람 모달 */}
       <AnimatePresence>
